@@ -1,0 +1,11 @@
+[package]
+name = "lucian"
+version = "0.2.8"
+edition = "2021"
+description = "a library use by *theshy*(a socks5 proxy server)"
+license = "GPL"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mio = {version = "0.8",features = ["os-poll", "net"]}
+sni_shuffle = "0.1"
