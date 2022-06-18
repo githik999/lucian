@@ -2,7 +2,8 @@ use std::{io::ErrorKind, net::SocketAddr};
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
 
-use crate::{hub::{Hub, line::LineType}, log::Log};
+use crate::{hub::{header::LineType, Hub}, log::Log};
+
 const LISTENER: Token = Token(0);
 pub struct Gate {
     listener:TcpListener,
@@ -42,10 +43,6 @@ impl Gate {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
-                    match self.front_type {
-                        LineType::Fox => { self.hub.add_one_caller(p); }
-                        _ => {}
-                    }
                     self.hub.new_line(socket,p,self.front_type);
                 }
                     
@@ -54,7 +51,6 @@ impl Gate {
                 _ => { panic!("accept error"); }
             }
         }
-
        
     }
 

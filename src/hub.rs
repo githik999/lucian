@@ -1,17 +1,23 @@
-use std::{collections::HashMap, net::{ToSocketAddrs, SocketAddr, Shutdown}, io::Write, fs};
+use std::{collections::HashMap, net::{ToSocketAddrs, SocketAddr}};
 use mio::{Token, net::TcpStream, Poll, Interest, event::Event};
 use crate::log::Log;
 
-use self::line::{Line, LineType};
+use self::header::{Line, LineType};
 
 pub mod line;
+pub mod header;
+mod caller;
+mod fox;
+mod operator;
+mod process;
+mod http;
+
 
 pub struct Hub {
-    id:usize,
+    id:u64,
     m:HashMap<Token,Line>,
     proxy_server:Option<SocketAddr>,
     healthy_size:u8,
-    spawning:bool,
 }
 
 impl Hub {
@@ -60,9 +66,9 @@ impl Hub {
             return;
         }
 
-        match line.kind {
+        match line.kind() {
             LineType::Fox => {self.process_fox(k,buf);}
-            LineType::Log => {self.process_log(k,buf);}
+            LineType::Http => {self.process_http(k,buf);}
             LineType::Operator => {self.process_operator(k,buf,p);}
             _ => { self.tunnel(pid, buf); }
         }
@@ -86,15 +92,14 @@ impl Hub {
         }
     }
 
-    fn process_log(&mut self,k:&Token,buf:Vec<u8>) {
-        self.get_line(k).http(buf);
+    fn process_http(&mut self,k:&Token,buf:Vec<u8>) {
+        self.get_line(k).http_data(buf);
     }
 
     fn process_operator(&mut self,k:&Token,buf:Vec<u8>,p:&Poll) {
         let line = self.get_line(k);
         let operator_id = line.id();
         let spider_id = line.partner_id();
-        println!("process_operator spider_id:{} len:{}",spider_id,buf.len());
         if spider_id > 0 {
             self.tunnel(spider_id,buf);
             return;
@@ -119,37 +124,37 @@ impl Hub {
 
 
 impl Hub {
-    pub fn new(id:usize) -> Hub {
-        Hub { id, m:HashMap::new(),proxy_server:None,healthy_size:0,spawning:false }
+    pub fn new(id:u64) -> Hub {
+        Hub { id, m:HashMap::new(),proxy_server:None,healthy_size:0 }
     }
 
-    fn tunnel(&mut self,pid:usize,data:Vec<u8>) {
+    fn tunnel(&mut self,pid:u64,data:Vec<u8>) {
         let line = self.get_line_by_id(pid);
         line.add_queue(data);
         line.send();
     }
 
-    fn create_spider(&mut self,host:String,operator_id:usize,p:&Poll) -> usize {
-        //println!("[{}][{}]dns lookup {} start.....",App::now(),operator_id,host);
+    fn create_spider(&mut self,host:String,operator_id:u64,p:&Poll) -> u64 {
         match host.to_socket_addrs() {
             Ok(mut it) => {
                 let addr = it.next().unwrap();
-                //println!("[{}][{}]dns lookup finish {} {}",App::now(),operator_id,host,addr);
                 let stream = TcpStream::connect(addr).unwrap();
                 let id = self.new_line(stream,p,LineType::Spider);
                 let spider = self.get_line_by_id(id);
                 spider.set_partner_id(operator_id);
-                spider.set_host(host);
+                spider.set_host(host,0);
                 return id
             }
-            Err(e) => { /*println!("[{}]{} dns lookup fail {}",App::now(),host,e);*/ }
+            Err(e) => {
+                Log::add(format!("dns lookup fail|{}|{}",host,e), LineType::Spider, 0);
+            }
         }
         0
     }
 
-    pub fn new_line(&mut self,mut stream:TcpStream,p:&Poll,kind:LineType) -> usize {
+    pub fn new_line(&mut self,mut stream:TcpStream,p:&Poll,kind:LineType) -> u64 {
         let id = self.next_id();
-        let token = Token(id);
+        let token = Token(id.try_into().unwrap());
         p.registry().register(&mut stream, token, Interest::READABLE | Interest::WRITABLE).unwrap();
         let line = Line::new(id,stream,kind);
         self.m.insert(token, line);
@@ -162,9 +167,9 @@ impl Hub {
         }
     }
 
-    fn get_line_by_id(&mut self,id:usize) -> &mut Line {
+    fn get_line_by_id(&mut self,id:u64) -> &mut Line {
         assert!(id > 0);
-        self.get_line(&Token(id))
+        self.get_line(&Token(id.try_into().unwrap()))
     }
 
     fn get_line(&mut self,token:&Token) -> &mut Line {
@@ -172,7 +177,7 @@ impl Hub {
     }
     
     fn remove_line(&mut self,k:&Token,p:&Poll) {
-        let str = format!("remove line {:?}",k);
+        let str = format!("remove|{}",k.0);
         let kind = self.get_line(k).kind();
         let s = self.get_line(k).stream();
         p.registry().deregister(s).unwrap();
@@ -180,29 +185,54 @@ impl Hub {
         Log::add(str,kind,0);
     }
 
-    fn next_id(&mut self) -> usize {
+    fn next_id(&mut self) -> u64 {
         self.id = self.id + 1;
         self.id
     }
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ///Caller Hub
 
 impl Hub {
-    pub fn get_idle_caller(&self) -> usize {
+    pub fn get_idle_caller(&self) -> u64 {
         for (key, v) in &self.m {
-            match v.kind {
-                LineType::Caller => {
-                    if v.available() {
-                        return key.0;
-                    }
-                }
-                _ => { }
+            if v.call_available() {
+                return key.0.try_into().unwrap();
             }
         }
         
-        let info = self.count_caller();
+        let info = [0;4];
+        self.count_caller(&info);
         println!("{:?}",info);
         panic!("must guarantee always have idle caller");
     }
@@ -216,22 +246,6 @@ impl Hub {
         self.add_caller(n,p);
     }
     
-    pub fn check_callers(&mut self,p:&Poll) {
-        let (idle,born,working,dead) = self.count_caller();
-        //println!("[{}]check_callers idle:{} born:{} working:{} dead:{} healthy:{} spawning:{}",App::now(),idle,born,working,dead,self.healthy_size,self.spawning);
-        if idle >= self.healthy_size { 
-            self.spawning = false;
-            return; 
-        }
-        
-        if self.spawning { 
-            return;
-        }
-
-        self.spawning = true;
-        self.add_caller(self.healthy_size,p);
-    }
-
     fn add_caller(&mut self,n:u8,p:&Poll) {
         for _ in 0..n {
             self.add_one_caller(p);
@@ -243,33 +257,14 @@ impl Hub {
         self.new_line(stream,p,LineType::Caller);
     }
 
-    fn count_caller(&self) -> (u8,u8,u8,u8) {
-        let mut idle = 0;
-        let mut born = 0;
-        let mut working = 0;
-        let mut dead = 0;
-        
+    fn count_caller(&self,_info:&[u8]) {
         for (_key, v) in &self.m {
-            match v.kind {
-                LineType::Caller => {
-                    if v.available() {
-                        idle = idle + 1;
-                    } else if v.just_born() {
-                        born = born + 1;
-                    } else if v.is_dead() {
-                        dead = dead + 1;
-                    } else if v.partner_id() > 0 {
-                        working = working + 1;
-                    }
-                }
-                _ => {}
+            if v.kind() == LineType::Caller {
+                
             }
         }
 
-        (idle,born,working,dead)
     }
-
-    
 
     
 
