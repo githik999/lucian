@@ -12,10 +12,6 @@ impl Log {
             _ => {}
         }
         fs::create_dir("log").unwrap();
-
-        Log::create_dir(LineType::Fox);
-        Log::create_dir(LineType::Caller);
-        Log::create_dir(LineType::Log);
     }
 
     pub fn create_dir(kind:LineType) {
@@ -33,7 +29,8 @@ impl Log {
 
     pub fn add(str:String,kind:LineType,id:usize) {
         let path = Log::get_path(kind,id);
-        let mut f = File::options().append(true).open(path).unwrap();
+        let msg = path.clone();
+        let mut f = File::options().append(true).open(path).expect(msg.as_str());
         let s = format!("{}|{}\r",Log::now(),str);
         f.write(s.as_bytes()).unwrap();
     }
