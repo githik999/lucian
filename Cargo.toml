@@ -1,6 +1,6 @@
 [package]
 name = "lucian"
-version = "0.2.10"
+version = "0.2.11"
 edition = "2021"
 description = "a library use by *theshy*(a socks5 proxy server)"
 license = "GPL-3.0"
