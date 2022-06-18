@@ -1,27 +1,28 @@
-use std::io::ErrorKind;
+use std::{io::ErrorKind, net::SocketAddr};
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
 
-use crate::{hub::{Hub, line::LineType}, app::App};
+use crate::{hub::{Hub, line::LineType}, log::Log};
 const LISTENER: Token = Token(0);
 pub struct Gate {
     listener:TcpListener,
-    front_line_type:LineType,
+    front_type:LineType,
     pub hub:Hub
 }
 
 impl Gate {
-    pub fn new(addr:&str,front_line_type:LineType,p:&Poll) -> Gate {
-        let addr = addr.parse().unwrap();
+    pub fn new(port:usize,front_type:LineType,p:&Poll) -> Gate {
+        let addr = Gate::parse_addr(port,front_type);
         let mut listener = TcpListener::bind(addr).unwrap();
         p.registry().register(&mut listener, LISTENER, Interest::READABLE).unwrap();
-        println!("[{}]gate listening on {} waiting for connections...",App::now(),addr);
-        Gate{ listener,front_line_type,hub:Hub::new(0) }
+        let str = format!("gate({:?}) listening on {} waiting for connections...",front_type,addr);
+        Log::add(str, front_type,0);
+        Gate{ listener,front_type,hub:Hub::new(0) }
     }
 
     pub fn process(&mut self, event:&Event,p:&Poll) {
-        match  self.front_line_type {
-            LineType::Fox | LineType::Operator => { println!("[{}]{:?}", App::now(), event); }
+        match  self.front_type {
+            //LineType::Fox | LineType::Operator => { println!("[{}]{:?}", App::now(), event); }
             // => { println!("{:?}",event); }
             _ => {}
         }
@@ -41,11 +42,11 @@ impl Gate {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
-                    match self.front_line_type {
+                    match self.front_type {
                         LineType::Fox => { self.hub.add_one_caller(p); }
                         _ => {}
                     }
-                    self.hub.new_line(socket,p,self.front_line_type);
+                    self.hub.new_line(socket,p,self.front_type);
                 }
                     
                 Err(err) if err.kind() == ErrorKind::WouldBlock => { break; }
@@ -55,6 +56,14 @@ impl Gate {
         }
 
        
+    }
+
+    fn parse_addr(port:usize,front_type:LineType) -> SocketAddr {
+        let mut ip= "127.0.0.1";
+        if front_type == LineType::Operator {
+            ip = "0.0.0.0";
+        }
+        format!("{}:{}",ip,port).parse().unwrap()
     }
 
 }

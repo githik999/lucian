@@ -1,6 +1,6 @@
-use std::{collections::HashMap, net::{ToSocketAddrs, SocketAddr}};
+use std::{collections::HashMap, net::{ToSocketAddrs, SocketAddr, Shutdown}, io::Write, fs};
 use mio::{Token, net::TcpStream, Poll, Interest, event::Event};
-use crate::app::App;
+use crate::log::Log;
 
 use self::line::{Line, LineType};
 
@@ -29,10 +29,11 @@ impl Hub {
             if v.is_writable() {
                 self.get_line(k).on_writable();
             }
-    
+
             if v.is_readable() {
                 self.process_read(k,p);
             }
+            
         }
 
         if v.is_read_closed() {
@@ -61,6 +62,7 @@ impl Hub {
 
         match line.kind {
             LineType::Fox => {self.process_fox(k,buf);}
+            LineType::Log => {self.process_log(k,buf);}
             LineType::Operator => {self.process_operator(k,buf,p);}
             _ => { self.tunnel(pid, buf); }
         }
@@ -84,8 +86,12 @@ impl Hub {
         }
     }
 
-    fn process_operator(&mut self,token:&Token,buf:Vec<u8>,p:&Poll) {
-        let line = self.get_line(token);
+    fn process_log(&mut self,k:&Token,buf:Vec<u8>) {
+        self.get_line(k).http(buf);
+    }
+
+    fn process_operator(&mut self,k:&Token,buf:Vec<u8>,p:&Poll) {
+        let line = self.get_line(k);
         let operator_id = line.id();
         let spider_id = line.partner_id();
         println!("process_operator spider_id:{} len:{}",spider_id,buf.len());
@@ -99,10 +105,10 @@ impl Hub {
                 let host = line.host().clone();
                 let id = self.create_spider(host,operator_id,p);
                 if id > 0 {
-                    self.get_line(token).set_partner_id(id);
+                    self.get_line(k).set_partner_id(id);
                     self.get_line_by_id(id).add_queue(data);
                 } else {
-                    println!("[{}]create_spider fail",App::now())
+                    //println!("[{}]create_spider fail",App::now())
                 }
             }
             _ => {}
@@ -124,11 +130,11 @@ impl Hub {
     }
 
     fn create_spider(&mut self,host:String,operator_id:usize,p:&Poll) -> usize {
-        println!("[{}][{}]dns lookup {} start.....",App::now(),operator_id,host);
+        //println!("[{}][{}]dns lookup {} start.....",App::now(),operator_id,host);
         match host.to_socket_addrs() {
             Ok(mut it) => {
                 let addr = it.next().unwrap();
-                println!("[{}][{}]dns lookup finish {} {}",App::now(),operator_id,host,addr);
+                //println!("[{}][{}]dns lookup finish {} {}",App::now(),operator_id,host,addr);
                 let stream = TcpStream::connect(addr).unwrap();
                 let id = self.new_line(stream,p,LineType::Spider);
                 let spider = self.get_line_by_id(id);
@@ -136,7 +142,7 @@ impl Hub {
                 spider.set_host(host);
                 return id
             }
-            Err(e) => { println!("[{}]{} dns lookup fail {}",App::now(),host,e); }
+            Err(e) => { /*println!("[{}]{} dns lookup fail {}",App::now(),host,e);*/ }
         }
         0
     }
@@ -166,10 +172,12 @@ impl Hub {
     }
     
     fn remove_line(&mut self,k:&Token,p:&Poll) {
-        println!("try to remove line {:?}",k);
+        let str = format!("remove line {:?}",k);
+        let kind = self.get_line(k).kind();
         let s = self.get_line(k).stream();
         p.registry().deregister(s).unwrap();
         self.m.remove(k);
+        Log::add(str,kind,0);
     }
 
     fn next_id(&mut self) -> usize {
@@ -210,7 +218,7 @@ impl Hub {
     
     pub fn check_callers(&mut self,p:&Poll) {
         let (idle,born,working,dead) = self.count_caller();
-        println!("[{}]check_callers idle:{} born:{} working:{} dead:{} healthy:{} spawning:{}",App::now(),idle,born,working,dead,self.healthy_size,self.spawning);
+        //println!("[{}]check_callers idle:{} born:{} working:{} dead:{} healthy:{} spawning:{}",App::now(),idle,born,working,dead,self.healthy_size,self.spawning);
         if idle >= self.healthy_size { 
             self.spawning = false;
             return; 
