@@ -67,7 +67,7 @@ impl Hub {
         match line.fox_data(buf) {
             Some(data) => {
                 if caller_id == 0 {
-                    caller_id = 1;//self.get_idle_caller();
+                    caller_id = self.get_idle_caller();
                     self.get_line_by_id(caller_id).set_partner_id(fox_id);
                     self.get_line(k).set_partner_id(caller_id);
                 }
