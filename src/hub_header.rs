@@ -55,6 +55,15 @@ impl Hub {
         self.proxy_server = Some(addr.parse().unwrap());
     }
 
+    pub fn remove_pair(&mut self,k:&Token,p:&Poll) {
+        let pid = self.get_line(k).partner_id();
+        self.get_line(k).go_die();
+        self.remove_line(k,p);
+        if pid > 0 {
+            self.get_line_by_id(pid).go_die();
+        }
+    }
+
     pub fn remove_line_by_id(&mut self,id:usize,p:&Poll) {
         if id > 0 {
             self.remove_line(&Token(id),p);

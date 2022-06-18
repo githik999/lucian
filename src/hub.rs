@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::{ToSocketAddrs}};
+use std::net::ToSocketAddrs;
 use mio::{Token, net::TcpStream, Poll, event::Event};
 use crate::{log::Log, hub_header::Hub};
 
@@ -41,14 +41,6 @@ impl Hub {
         }
     }
 
-    fn remove_pair(&mut self,k:&Token,p:&Poll) {
-        let pid = self.get_line(k).partner_id();
-        self.get_line(k).go_die();
-        self.remove_line(k,p);
-        if pid > 0 {
-            self.get_line_by_id(pid).go_die();
-        }
-    }
 
     fn process_read(&mut self,k:&Token,p:&Poll) {
         let line = self.get_line(k);
@@ -112,11 +104,6 @@ impl Hub {
             _ => {}
         }
     }
-}
-
-
-
-impl Hub {
 
     fn tunnel(&mut self,pid:u64,data:Vec<u8>) {
         let line = self.get_line_by_id(pid);
@@ -142,6 +129,5 @@ impl Hub {
         0
     }
 
-    
-    
+
 }
