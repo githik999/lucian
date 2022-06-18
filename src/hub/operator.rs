@@ -1,6 +1,6 @@
 //Operator
 
-use super::header::Line;
+use super::line_header::Line;
 
 impl Line {
     pub fn decrypt_sni(&mut self,buf:&Vec<u8>) -> Option<Vec<u8>> {

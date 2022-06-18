@@ -1,6 +1,6 @@
 use std::{time::SystemTime, fs::{File, self}, io::Write};
 
-use crate::hub::header::LineType;
+use crate::hub::line_header::LineType;
 
 pub struct Log {}
 

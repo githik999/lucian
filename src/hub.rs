@@ -1,24 +1,17 @@
-use std::{collections::HashMap, net::{ToSocketAddrs, SocketAddr}};
-use mio::{Token, net::TcpStream, Poll, Interest, event::Event};
-use crate::log::Log;
+use std::{collections::HashMap, net::{ToSocketAddrs}};
+use mio::{Token, net::TcpStream, Poll, event::Event};
+use crate::{log::Log, hub_header::Hub};
 
-use self::header::{Line, LineType};
+use self::line_header::LineType;
 
-pub mod line;
-pub mod header;
-mod caller;
+pub mod line_header;
 mod fox;
-mod operator;
-mod process;
+mod line;
 mod http;
+mod caller;
+mod process;
+mod operator;
 
-
-pub struct Hub {
-    id:u64,
-    m:HashMap<Token,Line>,
-    proxy_server:Option<SocketAddr>,
-    healthy_size:u8,
-}
 
 impl Hub {
     pub fn process(&mut self,v:&Event,p:&Poll) {
@@ -82,7 +75,7 @@ impl Hub {
         match line.fox_data(buf) {
             Some(data) => {
                 if caller_id == 0 {
-                    caller_id = self.get_idle_caller();
+                    caller_id = 1;//self.get_idle_caller();
                     self.get_line_by_id(caller_id).set_partner_id(fox_id);
                     self.get_line(k).set_partner_id(caller_id);
                 }
@@ -124,9 +117,6 @@ impl Hub {
 
 
 impl Hub {
-    pub fn new(id:u64) -> Hub {
-        Hub { id, m:HashMap::new(),proxy_server:None,healthy_size:0 }
-    }
 
     fn tunnel(&mut self,pid:u64,data:Vec<u8>) {
         let line = self.get_line_by_id(pid);
@@ -152,121 +142,6 @@ impl Hub {
         0
     }
 
-    pub fn new_line(&mut self,mut stream:TcpStream,p:&Poll,kind:LineType) -> u64 {
-        let id = self.next_id();
-        let token = Token(id.try_into().unwrap());
-        p.registry().register(&mut stream, token, Interest::READABLE | Interest::WRITABLE).unwrap();
-        let line = Line::new(id,stream,kind);
-        self.m.insert(token, line);
-        id
-    }
-
-    pub fn remove_line_by_id(&mut self,id:usize,p:&Poll) {
-        if id > 0 {
-            self.remove_line(&Token(id),p);
-        }
-    }
-
-    fn get_line_by_id(&mut self,id:u64) -> &mut Line {
-        assert!(id > 0);
-        self.get_line(&Token(id.try_into().unwrap()))
-    }
-
-    fn get_line(&mut self,token:&Token) -> &mut Line {
-        self.m.get_mut(token).expect(&token.0.to_string())
-    }
     
-    fn remove_line(&mut self,k:&Token,p:&Poll) {
-        let str = format!("remove|{}",k.0);
-        let kind = self.get_line(k).kind();
-        let s = self.get_line(k).stream();
-        p.registry().deregister(s).unwrap();
-        self.m.remove(k);
-        Log::add(str,kind,0);
-    }
-
-    fn next_id(&mut self) -> u64 {
-        self.id = self.id + 1;
-        self.id
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-///Caller Hub
-
-impl Hub {
-    pub fn get_idle_caller(&self) -> u64 {
-        for (key, v) in &self.m {
-            if v.call_available() {
-                return key.0.try_into().unwrap();
-            }
-        }
-        
-        let info = [0;4];
-        self.count_caller(&info);
-        println!("{:?}",info);
-        panic!("must guarantee always have idle caller");
-    }
-
     
-
-    pub fn init_callers(&mut self,n:u8,addr:&str,p:&Poll) {
-        assert!(n < 64);
-        self.healthy_size = n;
-        self.proxy_server = Some(addr.parse().unwrap());
-        self.add_caller(n,p);
-    }
-    
-    fn add_caller(&mut self,n:u8,p:&Poll) {
-        for _ in 0..n {
-            self.add_one_caller(p);
-        }
-    }
-
-    pub fn add_one_caller(&mut self,p:&Poll) {
-        let stream = TcpStream::connect(self.proxy_server.unwrap()).unwrap();
-        self.new_line(stream,p,LineType::Caller);
-    }
-
-    fn count_caller(&self,_info:&[u8]) {
-        for (_key, v) in &self.m {
-            if v.kind() == LineType::Caller {
-                
-            }
-        }
-
-    }
-
-    
-
-   
 }

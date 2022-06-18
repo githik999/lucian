@@ -2,7 +2,7 @@ use std::{io::ErrorKind, net::SocketAddr};
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
 
-use crate::{hub::{header::LineType, Hub}, log::Log};
+use crate::{hub::{line_header::LineType}, log::Log, hub_header::Hub};
 
 const LISTENER: Token = Token(0);
 pub struct Gate {

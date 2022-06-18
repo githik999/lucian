@@ -1,6 +1,6 @@
 use std::{io::{ErrorKind, Read}, net::Shutdown};
 
-use super::header::{LineStatus::{Connected,Dead},Line};
+use super::line_header::{LineStatus::{Connected,Dead},Line};
 use crate::log::Log;
 
 impl Line {
@@ -57,9 +57,10 @@ impl Line {
 
         loop {
             if self.queue().len() > 0 {
-               
+                self.pour_queue();
+            } else {
+                break;
             }
-            break;
         }
     }
 

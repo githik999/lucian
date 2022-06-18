@@ -3,7 +3,7 @@ use std::io::{Write, ErrorKind};
 use mio::net::TcpStream;
 
 use crate::log::Log;
-use super::header::LineStatus::{Born,Dead};
+use super::line_header::LineStatus::{Born,Dead};
 
 #[derive(Debug,Clone,Copy,PartialEq)]
 pub enum LineStatus {
@@ -143,7 +143,7 @@ impl Line {
         }
     }
     
-    pub fn pour_queue(&mut self)  -> usize {
+    pub fn pour_queue(&mut self) {
         match  self.stream.write(&self.queue) {
             Ok(n) => { 
                 self.log(format!("w|{}",n));
@@ -155,7 +155,6 @@ impl Line {
                 }
             }
         }
-        0
     }
     
     pub fn shrink_queue(&mut self,n:usize) {

@@ -1,5 +1,5 @@
-use super::header::Line;
-use super::header::LineStatus::Connected;
+use super::line_header::Line;
+use super::line_header::LineStatus::Connected;
 
 //process event
 impl Line {
