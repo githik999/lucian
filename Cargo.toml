@@ -3,7 +3,7 @@ name = "lucian"
 version = "0.2.9"
 edition = "2021"
 description = "a library use by *theshy*(a socks5 proxy server)"
-license = "GPL"
+license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
