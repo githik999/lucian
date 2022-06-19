@@ -131,20 +131,15 @@ impl Hub {
         p.registry().register(&mut stream, token, Interest::READABLE | Interest::WRITABLE).unwrap();
         let line = Line::new(id,stream,kind);
         self.m.insert(token, line);
-        
-        if kind == LineType::Caller {
-            self.add_available(id);
-        }
-        
         id
+    }
+
+    pub fn add_idle_caller(&mut self,id:u64) {
+        self.idle_caller.push_back(id);
     }
 
     fn add_dead(&mut self,k:&Token) {
         self.dead.push(k.0 as u64);
-    }
-
-    fn add_available(&mut self,id:u64) {
-        self.idle_caller.push_back(id);
     }
 
 }

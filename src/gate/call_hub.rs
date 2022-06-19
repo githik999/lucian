@@ -56,7 +56,8 @@ impl Hub {
 
     fn add_one_caller(&mut self,p:&Poll) {
         let stream = TcpStream::connect(self.proxy_server()).unwrap();
-        self.new_line(stream,p,LineType::Caller);
+        let id = self.new_line(stream,p,LineType::Caller);
+        self.add_idle_caller(id);
     }
 
     fn count_caller(&mut self,info:&mut [u8]) {
