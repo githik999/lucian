@@ -37,6 +37,7 @@ impl Gate {
 
     pub fn check(&mut self,p:&Poll) {
         if self.front_type == LineType::Fox {
+            self.hub.old_check();
             self.hub.dead_check();
             self.hub.health_check(p);
         }

@@ -1,23 +1,13 @@
 use mio::{Poll, net::TcpStream};
 
+use crate::log::Log;
+
 use super::hub_header::Hub;
 use super::hub::line_header::LineType;
 
 ///Caller Hub
 
 impl Hub {
-    pub fn get_idle_caller(&mut self) -> u64 {
-        for (key, v) in self.m() {
-            if v.available() {
-                return key.0.try_into().unwrap();
-            }
-        }
-        let mut info = [0;4];
-        self.count_caller(&mut info);
-        println!("{:?}",info);
-        panic!("must guarantee always have idle caller");
-    }
-
     pub fn init_callers(&mut self,n:u8,addr:&str,p:&Poll) {
         assert!(n < u8::MAX/4);
         self.set_healthy_size(n);
@@ -25,13 +15,27 @@ impl Hub {
         self.add_caller(n,p);
     }
 
-    pub fn health_check(&mut self,p:&Poll) {
-        /*let mut info = [0;4];
-        self.count_caller(&mut info);
-        println!("{:?}",info);*/
+    pub fn old_check(&mut self) {
+        let mut n:u8 = 0;
+        for (_key, v) in self.m() {
+            if v.kind() == LineType::Caller {
+                let age = Log::now() - v.born_time();
+                if age > 300000 {
+                    n += 1;
+                }
+            }
+        }
+        println!("old:{}",n);
+    }
 
+    pub fn health_check(&mut self,p:&Poll) {
+        let mut info = [0;4];
+        self.count_caller(&mut info);
         let need = self.healthy_size();
-        let have:u8 = self.count_idle_caller();
+        let have:u8 = self.idle_caller_count();
+        
+        println!("{:?} have:{}",info,have);
+
         if have > need { self.set_spawning(false); }
         if self.spawning() { return; }
         if have < need {
@@ -63,17 +67,5 @@ impl Hub {
             }
         }
     }
-
-    fn count_idle_caller(&mut self) -> u8 {
-        let mut ret = 0;
-        for (_key, v) in self.m() {
-            if v.available() {
-                ret += 1;
-            }
-        }
-        ret
-    }
-    
-
    
 }

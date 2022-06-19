@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::{collections::{HashMap, VecDeque}, net::SocketAddr};
 
 use mio::{Token, Poll, net::TcpStream, Interest};
 
@@ -11,6 +11,7 @@ pub struct Hub {
     healthy_size:u8,
     proxy_server:Option<SocketAddr>,
     m:HashMap<Token,Line>,
+    idle_caller:VecDeque<u64>,
     dead:Vec<u64>
 }
 
@@ -32,6 +33,14 @@ impl Hub {
         self.spawning
     }
 
+    pub fn idle_caller_count(&self) -> u8 {
+        self.idle_caller.len() as u8
+    }
+
+    pub fn idle_caller(&mut self) -> u64 {
+        self.idle_caller.pop_front().expect("must guarantee have idle caller")
+    }
+
     pub fn dead_count(&self) -> u8 {
         self.dead.len() as u8
     }
@@ -47,7 +56,7 @@ impl Hub {
     
     pub fn dead_check(&mut self) {
         if self.dead_count() > self.healthy_size() {
-           self.remove_dead();
+            self.remove_dead();
         }
     }
 
@@ -64,7 +73,7 @@ impl Hub {
 impl Hub {
     
     pub fn new(id:u64) -> Hub {
-        Hub { id,spawning:false,healthy_size:0,proxy_server:None,m:HashMap::new(),dead:Vec::new() }
+        Hub { id,spawning:false,healthy_size:0,proxy_server:None,m:HashMap::new(),idle_caller:VecDeque::new(),dead:Vec::new() }
     }
 
     pub fn next_id(&mut self) -> u64 {
@@ -122,10 +131,20 @@ impl Hub {
         p.registry().register(&mut stream, token, Interest::READABLE | Interest::WRITABLE).unwrap();
         let line = Line::new(id,stream,kind);
         self.m.insert(token, line);
+        
+        if kind == LineType::Caller {
+            self.add_available(id);
+        }
+        
         id
     }
 
     fn add_dead(&mut self,k:&Token) {
         self.dead.push(k.0 as u64);
     }
+
+    fn add_available(&mut self,id:u64) {
+        self.idle_caller.push_back(id);
+    }
+
 }
