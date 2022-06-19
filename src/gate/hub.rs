@@ -1,8 +1,11 @@
 use std::net::ToSocketAddrs;
 use mio::{Token, net::TcpStream, Poll, event::Event};
-use crate::{log::Log, hub_header::Hub};
+
+use crate::log::Log;
 
 use self::line_header::LineType;
+
+use super::hub_header::Hub;
 
 pub mod line_header;
 mod fox;

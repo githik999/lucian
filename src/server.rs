@@ -1,6 +1,6 @@
 use mio::{Poll, Events};
 
-use crate::{gate::Gate,log::Log, hub::line_header::LineType};
+use crate::{gate::{Gate, hub::line_header::LineType}, log::Log};
 
 pub struct Server {
     p:Poll,

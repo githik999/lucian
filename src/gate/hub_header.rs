@@ -2,7 +2,7 @@ use std::{collections::HashMap, net::SocketAddr};
 
 use mio::{Token, Poll, net::TcpStream, Interest};
 
-use crate::{hub::line_header::{Line, LineType}, log::Log};
+use crate::{gate::hub::line_header::{Line,LineType},  log::Log};
 
 
 pub struct Hub {
