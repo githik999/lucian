@@ -1,7 +1,5 @@
 use mio::{Poll, net::TcpStream};
 
-use crate::gate::hub::line_header::LineStatus;
-
 use super::hub_header::Hub;
 use super::hub::line_header::LineType;
 
