@@ -29,7 +29,7 @@ impl Gate {
     }
 
     pub fn process(&mut self, event:&Event,p:&Poll) {
-        Log::add(format!("{:?}",event), self.front_type, 0);
+        //Log::add(format!("{:?}",event), self.front_type, 0);
         match event.token() {
             LISTENER => { self.on_listener_event(event,p); }
             _ => { self.hub.process(event,p); }

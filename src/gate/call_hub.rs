@@ -43,13 +43,8 @@ impl Hub {
     }
 
     pub fn health_check(&mut self,p:&Poll) {
-        let mut info = [0;4];
-        self.count_caller(&mut info);
         let need = self.healthy_size();
         let have:u8 = self.idle_caller_count();
-        
-        println!("{:?} have:{}",info,have);
-
         if have >= need { self.set_spawning(false); }
         if self.spawning() { return; }
         if have < need {
@@ -72,15 +67,6 @@ impl Hub {
         let stream = TcpStream::connect(self.proxy_server()).unwrap();
         let id = self.new_line(stream,p,LineType::Caller);
         self.add_idle_caller(id);
-    }
-
-    fn count_caller(&mut self,info:&mut [u8]) {
-        for (_key, v) in self.m() {
-            if v.kind() == LineType::Caller {
-                let i:usize = v.status() as usize;
-                info[i] += 1;
-            }
-        }
     }
    
 }

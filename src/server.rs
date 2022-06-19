@@ -1,5 +1,4 @@
 use mio::{Poll, Events};
-
 use crate::{gate::{Gate, hub::line_header::LineType}, log::Log};
 
 pub struct Server {
@@ -12,16 +11,13 @@ impl Server {
     pub fn new(port:usize,kind:LineType) -> Server {
         let p = Poll::new().unwrap();
         let events = Events::with_capacity(u8::MAX.into());
-        
         Log::create_dir(kind);
         match kind {
             LineType::Fox => { Log::create_dir(LineType::Caller); }
             LineType::Operator => { Log::create_dir(LineType::Spider); }
             _ => {}
         }
-
         let gate = Gate::new(port,kind,&p);
-
         Server { p, events , gate }
     }
 
@@ -47,9 +43,6 @@ impl Server {
         }
         ret
     }
-
-    
-
     
 
 }
