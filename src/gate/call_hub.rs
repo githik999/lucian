@@ -26,9 +26,9 @@ impl Hub {
     }
 
     pub fn health_check(&mut self,p:&Poll) {
-        let mut info = [0;4];
+        /*let mut info = [0;4];
         self.count_caller(&mut info);
-        println!("{:?}",info);
+        println!("{:?}",info);*/
 
         let need = self.healthy_size();
         let have:u8 = self.count_idle_caller();

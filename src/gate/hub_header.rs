@@ -2,15 +2,16 @@ use std::{collections::HashMap, net::SocketAddr};
 
 use mio::{Token, Poll, net::TcpStream, Interest};
 
-use crate::{gate::hub::line_header::{Line,LineType},  log::Log};
+use crate::{gate::hub::line_header::{Line,LineType}, log::Log};
 
 
 pub struct Hub {
     id:u64,
-    m:HashMap<Token,Line>,
-    proxy_server:Option<SocketAddr>,
+    spawning:bool,
     healthy_size:u8,
-    spawning:bool
+    proxy_server:Option<SocketAddr>,
+    m:HashMap<Token,Line>,
+    dead:Vec<u64>
 }
 
 //Get
@@ -31,14 +32,25 @@ impl Hub {
         self.spawning
     }
 
-    pub fn get_line_by_id(&mut self,id:u64) -> &mut Line {
-        assert!(id > 0);
-        self.get_line(self.token(id))
+    pub fn dead_count(&self) -> u8 {
+        self.dead.len() as u8
     }
 
-    pub fn get_line(&mut self,token:Token) -> &mut Line {
-        self.m.get_mut(&token).expect(&token.0.to_string())
+    pub fn get_line_by_id(&mut self,id:u64) -> &mut Line {
+        assert!(id > 0);
+        self.get_line(&self.token(id))
     }
+
+    pub fn get_line(&mut self,token:&Token) -> &mut Line {
+        self.m.get_mut(token).expect(&token.0.to_string())
+    }
+    
+    pub fn dead_check(&mut self) {
+        if self.dead_count() > self.healthy_size() {
+           self.remove_dead();
+        }
+    }
+
 
     fn token(&self,id:u64) -> Token {
         Token(id.try_into().unwrap())
@@ -52,7 +64,7 @@ impl Hub {
 impl Hub {
     
     pub fn new(id:u64) -> Hub {
-        Hub { id,m:HashMap::new(),proxy_server:None,healthy_size:0,spawning:false }
+        Hub { id,spawning:false,healthy_size:0,proxy_server:None,m:HashMap::new(),dead:Vec::new() }
     }
 
     pub fn next_id(&mut self) -> u64 {
@@ -72,24 +84,36 @@ impl Hub {
         self.spawning = v
     }
 
-    pub fn dead_pair(&mut self,k:Token,p:&Poll) {
+    pub fn dead_pair(&mut self,k:&Token,p:&Poll) {
         let pid = self.get_line(k).partner_id();
-        self.dead_line_id(pid,p);
-        self.dead_line(k,p);
+        self.kill_line_by_id(pid,p);
+        self.kill_line(k,p);
     }
 
-    pub fn dead_line_id(&mut self,id:u64,p:&Poll) {
+    pub fn kill_line_by_id(&mut self,id:u64,p:&Poll) {
         if id > 0 {
-            self.dead_line(self.token(id), p);
+            self.kill_line(&self.token(id), p);
         }
-        
     }
 
-    pub fn dead_line(&mut self,k:Token,p:&Poll) {
-        let kind = self.get_line(k).kind();
+    pub fn kill_line(&mut self,k:&Token,p:&Poll) {
         let s = self.get_line(k).stream();
         p.registry().deregister(s).unwrap();
         self.get_line(k).go_die();
+        self.add_dead(k);
+    }
+
+    pub fn remove_dead(&mut self) {
+        loop {
+            match self.dead.pop() {
+                Some(id) => {
+                    let kind = self.get_line_by_id(id).kind();
+                    self.m.remove(&self.token(id));
+                    Log::add(format!("rm|{}",id), kind, 0);
+                }
+                None => {break;}
+            }
+        }
     }
 
     pub fn new_line(&mut self,mut stream:TcpStream,p:&Poll,kind:LineType) -> u64 {
@@ -99,5 +123,9 @@ impl Hub {
         let line = Line::new(id,stream,kind);
         self.m.insert(token, line);
         id
+    }
+
+    fn add_dead(&mut self,k:&Token) {
+        self.dead.push(k.0 as u64);
     }
 }

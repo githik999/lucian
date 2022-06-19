@@ -15,7 +15,7 @@ mod operator;
 impl Hub {
     
     pub fn process(&mut self,event:&Event,p:&Poll) {
-        let k = event.token();
+        let k = &event.token();
         if event.is_error() {
             self.get_line(k).on_error();
             self.dead_pair(k, p);
@@ -44,7 +44,7 @@ impl Hub {
     }
 
 
-    fn process_read(&mut self,k:Token,p:&Poll) {
+    fn process_read(&mut self,k:&Token,p:&Poll) {
         let line = self.get_line(k);
         let pid = line.partner_id();
         let buf =  line.recv();
@@ -61,7 +61,7 @@ impl Hub {
         }
     }
 
-    fn process_fox(&mut self,k:Token,buf:Vec<u8>) {
+    fn process_fox(&mut self,k:&Token,buf:Vec<u8>) {
         let line = self.get_line(k);
         let fox_id = line.id();
         let mut caller_id = line.partner_id();
@@ -79,11 +79,11 @@ impl Hub {
         }
     }
 
-    fn process_http(&mut self,k:Token,buf:Vec<u8>) {
+    fn process_http(&mut self,k:&Token,buf:Vec<u8>) {
         self.get_line(k).http_data(buf);
     }
 
-    fn process_operator(&mut self,k:Token,buf:Vec<u8>,p:&Poll) {
+    fn process_operator(&mut self,k:&Token,buf:Vec<u8>,p:&Poll) {
         let line = self.get_line(k);
         let operator_id = line.id();
         let spider_id = line.partner_id();

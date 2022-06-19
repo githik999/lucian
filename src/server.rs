@@ -29,8 +29,8 @@ impl Server {
         loop {
             self.p.poll(&mut self.events, None).unwrap();
             let ret = self.process_event();
-            if self.gate.front_type() == LineType::Fox && ret == 1 {
-                self.gate.hub.health_check(&self.p);
+            if ret == 1 {
+                self.gate.check(&self.p);
             }
         }
     }
