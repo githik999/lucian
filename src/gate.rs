@@ -29,17 +29,16 @@ impl Gate {
     }
 
     pub fn process(&mut self, event:&Event,p:&Poll) {
-        match  self.front_type {
-            //LineType::Fox | LineType::Operator => { println!("[{}]{:?}", App::now(), event); }
-            // => { println!("{:?}",event); }
-            _ => {}
-        }
-        
         match event.token() {
             LISTENER => { self.on_listener_event(event,p); }
             _ => { self.hub.process(event,p); }
         }
     }
+
+    pub fn front_type(&self) -> LineType {
+        self.front_type
+    }
+
 
     fn on_listener_event(&mut self, event:&Event,p:&Poll) {
         
