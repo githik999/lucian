@@ -64,12 +64,6 @@ impl Hub {
         }
     }
 
-    pub fn remove_line_by_id(&mut self,id:usize,p:&Poll) {
-        if id > 0 {
-            self.remove_line(&Token(id),p);
-        }
-    }
-
     pub fn remove_line(&mut self,k:&Token,p:&Poll) {
         let str = format!("remove|{}",k.0);
         let kind = self.get_line(k).kind();

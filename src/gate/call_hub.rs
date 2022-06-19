@@ -13,8 +13,8 @@ impl Hub {
             }
         }
         
-        let info = [0;4];
-        self.count_caller(&info);
+        let mut info = [0;4];
+        self.count_caller(&mut info);
         println!("{:?}",info);
         panic!("must guarantee always have idle caller");
     }
@@ -39,15 +39,14 @@ impl Hub {
         self.new_line(stream,p,LineType::Caller);
     }
 
-    fn count_caller(&mut self,_info:&[u8]) {
+    fn count_caller(&mut self,info:&mut [u8]) {
         for (_key, v) in self.m() {
             if v.kind() == LineType::Caller {
-                
+                let i:usize = v.call_status().try_into().unwrap();
+                info[i] += 1;
             }
         }
-
     }
-
     
 
    

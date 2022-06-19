@@ -125,7 +125,15 @@ impl Line {
         self.host = str;
     }
 
-    
+    pub fn read_closed(&mut self) {
+        //println!("[{}]({})[{}][on_read_closed]read_close:{},write_close:{},",App::now(),self.id,self.partner_id,self.read_close,self.write_close);
+        self.read_close = true;
+    }
+
+    pub fn write_closed(&mut self) {
+        //println!("[{}]({})[{}][on_write_closed]read_close:{},write_close:{},",App::now(),self.id,self.partner_id,self.read_close,self.write_close);
+        self.write_close = true;
+    }
 
     pub fn next_stage(&mut self) {
         self.stage = self.stage + 1;

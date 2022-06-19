@@ -17,9 +17,9 @@ mod operator;
 
 
 impl Hub {
-    pub fn process(&mut self,v:&Event,p:&Poll) {
-        let k = &v.token();
-        if v.is_error() {
+    pub fn process(&mut self,event:&Event,p:&Poll) {
+        let k = &event.token();
+        if event.is_error() {
             self.get_line(k).on_error();
             self.remove_pair(k, p);
             return;
@@ -28,18 +28,18 @@ impl Hub {
         if self.get_line(k).is_dead() {
             self.get_line(k).go_die();
         } else {
-            if v.is_writable() {
+            if event.is_writable() {
                 self.get_line(k).on_writable();
             }
 
-            if v.is_readable() {
+            if event.is_readable() {
                 self.process_read(k,p);
             }
             
         }
 
-        if v.is_read_closed() {
-            self.get_line(k).send();
+        if event.is_read_closed() {
+            self.get_line(k).read_closed();
             self.remove_pair(k, p);
         }
     }
