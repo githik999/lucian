@@ -1,5 +1,6 @@
 use mio::{Poll, net::TcpStream};
 
+use crate::gate::hub::line_header::LineStatus;
 use crate::log::Log;
 
 use super::hub_header::Hub;
@@ -18,9 +19,9 @@ impl Hub {
     pub fn old_check(&mut self) {
         let mut n:u8 = 0;
         for (_key, v) in self.m() {
-            if v.kind() == LineType::Caller {
+            if v.kind() == LineType::Caller && v.status() <= LineStatus::Connected {
                 let age = Log::now() - v.born_time();
-                if age > 300000 {
+                if age > 180000 {
                     n += 1;
                 }
             }

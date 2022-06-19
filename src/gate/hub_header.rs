@@ -93,21 +93,19 @@ impl Hub {
         self.spawning = v
     }
 
-    pub fn dead_pair(&mut self,k:&Token,p:&Poll) {
+    pub fn dead_pair(&mut self,k:&Token) {
         let pid = self.get_line(k).partner_id();
-        self.kill_line_by_id(pid,p);
-        self.kill_line(k,p);
+        self.kill_line_by_id(pid);
+        self.kill_line(k);
     }
 
-    pub fn kill_line_by_id(&mut self,id:u64,p:&Poll) {
+    pub fn kill_line_by_id(&mut self,id:u64) {
         if id > 0 {
-            self.kill_line(&self.token(id), p);
+            self.kill_line(&self.token(id));
         }
     }
 
-    pub fn kill_line(&mut self,k:&Token,p:&Poll) {
-        let s = self.get_line(k).stream();
-        p.registry().deregister(s).unwrap();
+    pub fn kill_line(&mut self,k:&Token) {
         self.get_line(k).go_die();
         self.add_dead(k);
     }

@@ -18,7 +18,7 @@ impl Hub {
         let k = &event.token();
         if event.is_error() {
             self.get_line(k).on_error();
-            self.dead_pair(k, p);
+            self.dead_pair(k);
             return;
         }
 
@@ -38,7 +38,7 @@ impl Hub {
 
         if event.is_read_closed() {
             self.get_line(k).read_closed();
-            self.dead_pair(k, p);
+            self.dead_pair(k);
         }
 
     }

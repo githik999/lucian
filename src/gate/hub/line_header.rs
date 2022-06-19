@@ -146,7 +146,7 @@ impl Line {
     pub fn add_queue(&mut self,v:Vec<u8>) {
         if v.len() > 0 {
             self.queue.extend(v.iter());
-            //self.log(format!("q|{}",v.len()));
+            self.log(format!("q|{}",v.len()));
         }
     }
     
