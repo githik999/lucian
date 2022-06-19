@@ -5,10 +5,11 @@ use mio::net::TcpStream;
 use crate::log::Log;
 use super::line_header::LineStatus::{Born,Dead};
 
-#[derive(Debug,Clone,Copy,PartialEq)]
+#[derive(Debug,Clone,Copy,PartialEq,PartialOrd)]
 pub enum LineStatus {
     Born,
     Connected,
+    Occupied,
     Dead,
 }
 
@@ -80,6 +81,12 @@ impl Line {
     pub fn born_time(&self) -> u128 {
         self.born
     }
+
+    pub fn available(&self) -> bool {
+        if self.kind != LineType::Caller { return false; }
+        if self.status != LineStatus::Connected { return false; }
+        true
+    }
     
 
 }
@@ -95,13 +102,15 @@ impl Line {
 
     pub fn set_partner_id(&mut self,id:u64) {
         if self.partner_id == id { return; }
-        let str = format!("p|{}",id);
-        self.log(str);
-        self.partner_id = id
+        if id > 0 {
+            self.set_status(LineStatus::Occupied);
+        }
+        self.partner_id = id;
+        self.log(format!("p|{}",id));
     }
 
     pub fn set_status(&mut self,v:LineStatus) {
-        if self.status == v { return; }
+        if v <= self.status { return; }
         self.log(format!("s|{:?}",v));
         self.status = v;
     }

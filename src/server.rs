@@ -11,7 +11,7 @@ pub struct Server {
 impl Server {
     pub fn new(port:usize,kind:LineType) -> Server {
         let p = Poll::new().unwrap();
-        let events = Events::with_capacity(128);
+        let events = Events::with_capacity(u8::MAX.into());
         
         Log::create_dir(kind);
         match kind {
@@ -28,14 +28,25 @@ impl Server {
     pub fn start(&mut self) {
         loop {
             self.p.poll(&mut self.events, None).unwrap();
-            for event in self.events.iter() {
-                self.gate.process(event,&self.p);
+            let ret = self.process_event();
+            if ret == 1 {
+                self.gate.hub.health_check(&self.p);
             }
+            
         }
     }
 
     pub fn init(&mut self,n:u8,addr:&str) {
         self.gate.hub.init_callers(n,addr,&self.p);
+    }
+
+    fn process_event(&mut self) -> u8 {
+        let mut ret = 0;
+        for event in self.events.iter() {
+            self.gate.process(event,&self.p);
+            ret += 1;
+        }
+        ret
     }
 
     

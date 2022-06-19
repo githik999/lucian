@@ -1,6 +1,6 @@
 use std::{io::{ErrorKind, Read}, net::Shutdown};
 
-use super::line_header::{LineStatus::{Connected,Dead},Line};
+use super::line_header::{LineStatus::{Connected,Occupied,Dead},Line};
 use crate::log::Log;
 
 impl Line {
@@ -53,7 +53,8 @@ impl Line {
     }
 
     pub fn send(&mut self) {
-        if self.status() != Connected { return; } 
+        let s = self.status();
+        if s != Connected && s != Occupied { return; } 
 
         loop {
             if self.queue().len() > 0 {

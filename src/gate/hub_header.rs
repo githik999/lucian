@@ -10,6 +10,7 @@ pub struct Hub {
     m:HashMap<Token,Line>,
     proxy_server:Option<SocketAddr>,
     healthy_size:u8,
+    spawning:bool
 }
 
 //Get
@@ -20,6 +21,14 @@ impl Hub {
 
     pub fn proxy_server(&self) -> SocketAddr {
         self.proxy_server.unwrap()
+    }
+
+    pub fn healthy_size(&self) -> u8 {
+        self.healthy_size
+    }
+
+    pub fn spawning(&self) -> bool {
+        self.spawning
     }
 
     pub fn get_line_by_id(&mut self,id:u64) -> &mut Line {
@@ -39,7 +48,7 @@ impl Hub {
 impl Hub {
     
     pub fn new(id:u64) -> Hub {
-        Hub { id, m:HashMap::new(),proxy_server:None,healthy_size:0 }
+        Hub { id,m:HashMap::new(),proxy_server:None,healthy_size:0,spawning:false }
     }
 
     pub fn next_id(&mut self) -> u64 {
@@ -53,6 +62,10 @@ impl Hub {
 
     pub fn set_proxy_server(&mut self,addr:&str) {
         self.proxy_server = Some(addr.parse().unwrap());
+    }
+
+    pub fn set_spawning(&mut self,v:bool) {
+        self.spawning = v
     }
 
     pub fn remove_pair(&mut self,k:&Token,p:&Poll) {
