@@ -38,10 +38,15 @@ impl Hub {
             
         }
 
+        if event.is_write_closed() {
+            self.get_line(k).write_closed();
+        }
+
         if event.is_read_closed() {
             self.get_line(k).read_closed();
             self.remove_pair(k, p);
         }
+
     }
 
 

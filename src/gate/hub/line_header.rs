@@ -77,19 +77,9 @@ impl Line {
         false
     }
 
-    pub fn is_read_closed(&self) -> bool {
-        self.read_close
-    }
-
-    pub fn is_write_closed(&self) -> bool {
-        self.write_close
-    }
-
     pub fn born_time(&self) -> u128 {
         self.born
     }
-
-
     
 
 }
