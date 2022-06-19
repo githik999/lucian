@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use mio::{Poll, net::TcpStream};
 
 use crate::gate::hub::line_header::LineStatus;
@@ -17,16 +19,27 @@ impl Hub {
     }
 
     pub fn old_check(&mut self) {
-        let mut n:u8 = 0;
-        for (_key, v) in self.m() {
+        let mut old = Vec::new();
+        let mut young = VecDeque::new();
+        
+        for id in self.idle_caller_list() {
+            let id = *id;
+            let v = self.get_line_by_id(id);
             if v.kind() == LineType::Caller && v.status() <= LineStatus::Connected {
                 let age = Log::now() - v.born_time();
                 if age > 180000 {
-                    n += 1;
+                    old.push(id)
+                } else {
+                    young.push_back(id)
                 }
             }
         }
-        println!("old:{}",n);
+
+        for id in old {
+            self.kill_line_by_id(id);
+        }
+
+        self.idle_caller_list_mut().clone_from(&young);
     }
 
     pub fn health_check(&mut self,p:&Poll) {
@@ -37,7 +50,7 @@ impl Hub {
         
         println!("{:?} have:{}",info,have);
 
-        if have > need { self.set_spawning(false); }
+        if have >= need { self.set_spawning(false); }
         if self.spawning() { return; }
         if have < need {
             self.spawn(p);

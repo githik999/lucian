@@ -41,16 +41,33 @@ impl Hub {
         self.idle_caller.pop_front().expect("must guarantee have idle caller")
     }
 
+    pub fn idle_caller_list(&self) -> &VecDeque<u64> {
+        &self.idle_caller
+    }
+
+    pub fn idle_caller_list_mut(&mut self) -> &mut VecDeque<u64> {
+        &mut self.idle_caller
+    }
+
     pub fn dead_count(&self) -> u8 {
         self.dead.len() as u8
     }
 
-    pub fn get_line_by_id(&mut self,id:u64) -> &mut Line {
+    pub fn get_line_by_id(&self,id:u64) -> &Line {
         assert!(id > 0);
         self.get_line(&self.token(id))
     }
 
-    pub fn get_line(&mut self,token:&Token) -> &mut Line {
+    pub fn get_line(&self,token:&Token) -> &Line {
+        self.m.get(token).expect(&token.0.to_string())
+    }
+
+    pub fn get_mut_line_by_id(&mut self,id:u64) -> &mut Line {
+        assert!(id > 0);
+        self.get_mut_line(&self.token(id))
+    }
+
+    pub fn get_mut_line(&mut self,token:&Token) -> &mut Line {
         self.m.get_mut(token).expect(&token.0.to_string())
     }
     
@@ -59,7 +76,6 @@ impl Hub {
             self.remove_dead();
         }
     }
-
 
     fn token(&self,id:u64) -> Token {
         Token(id.try_into().unwrap())
@@ -106,7 +122,7 @@ impl Hub {
     }
 
     pub fn kill_line(&mut self,k:&Token) {
-        self.get_line(k).go_die();
+        self.get_mut_line(k).go_die();
         self.add_dead(k);
     }
 

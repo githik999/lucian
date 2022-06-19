@@ -1,5 +1,7 @@
 use std::{io::{ErrorKind, Read}, net::Shutdown};
 
+use mio::event::Event;
+
 use super::line_header::{LineStatus::{Connected,Occupied,Dead},Line};
 use crate::log::Log;
 
@@ -15,12 +17,8 @@ impl Line {
         Log::add(format!("{}|{}|{}",self.id(),self.host(),t), self.kind(), 0);
     }
 
-    fn shutdown_stream(&mut self) {
-        if self.status() != Connected { return; }
-        match self.stream().shutdown(Shutdown::Both) {
-            Ok(_) => {}
-            Err(err) => { println!("shutdown fail {}",err); }
-        }
+    pub fn event_after_die(&self,e:&Event) {
+        self.log(format!("e|{:?}",e));
     }
 
     pub fn recv(&mut self) -> Vec<u8> {
@@ -66,6 +64,15 @@ impl Line {
 
     pub fn log(&self,str:String) {
         Log::add(str,self.kind(),self.id());
+    }
+
+
+    fn shutdown_stream(&mut self) {
+        if self.status() != Connected { return; }
+        match self.stream().shutdown(Shutdown::Both) {
+            Ok(_) => {}
+            Err(err) => { println!("shutdown fail {}",err); }
+        }
     }
 
 }

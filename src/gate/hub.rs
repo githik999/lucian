@@ -16,28 +16,32 @@ impl Hub {
     
     pub fn process(&mut self,event:&Event,p:&Poll) {
         let k = &event.token();
-        if event.is_error() {
-            self.get_line(k).on_error();
-            self.dead_pair(k);
+        
+        if self.get_line(k).is_dead() {
+            self.get_line(k).event_after_die(event);
             return;
         }
 
+        if event.is_error() {
+            self.get_mut_line(k).on_error();
+            self.dead_pair(k);
+            return;
+        }
+        
         if event.is_writable() {
-            self.get_line(k).on_writable();
+            self.get_mut_line(k).on_writable();
         }
 
         if event.is_readable() {
             self.process_read(k,p);
         }
-            
-        
 
         if event.is_write_closed() {
-            self.get_line(k).write_closed();
+            self.get_mut_line(k).write_closed();
         }
 
         if event.is_read_closed() {
-            self.get_line(k).read_closed();
+            self.get_mut_line(k).read_closed();
             self.dead_pair(k);
         }
 
@@ -45,7 +49,7 @@ impl Hub {
 
 
     fn process_read(&mut self,k:&Token,p:&Poll) {
-        let line = self.get_line(k);
+        let line = self.get_mut_line(k);
         let pid = line.partner_id();
         let buf =  line.recv();
         
@@ -62,7 +66,7 @@ impl Hub {
     }
 
     fn process_fox(&mut self,k:&Token,buf:Vec<u8>) {
-        let line = self.get_line(k);
+        let line = self.get_mut_line(k);
         let fox_id = line.id();
         let mut caller_id = line.partner_id();
         
@@ -70,8 +74,8 @@ impl Hub {
             Some(data) => {
                 if caller_id == 0 {
                     caller_id = self.idle_caller();
-                    self.get_line_by_id(caller_id).set_partner_id(fox_id);
-                    self.get_line(k).set_partner_id(caller_id);
+                    self.get_mut_line_by_id(caller_id).set_partner_id(fox_id);
+                    self.get_mut_line(k).set_partner_id(caller_id);
                 }
                 self.tunnel(caller_id, data);
             }
@@ -80,11 +84,11 @@ impl Hub {
     }
 
     fn process_http(&mut self,k:&Token,buf:Vec<u8>) {
-        self.get_line(k).http_data(buf);
+        self.get_mut_line(k).http_data(buf);
     }
 
     fn process_operator(&mut self,k:&Token,buf:Vec<u8>,p:&Poll) {
-        let line = self.get_line(k);
+        let line = self.get_mut_line(k);
         let operator_id = line.id();
         let spider_id = line.partner_id();
         if spider_id > 0 {
@@ -97,8 +101,8 @@ impl Hub {
                 let host = line.host().clone();
                 let id = self.create_spider(host,operator_id,p);
                 if id > 0 {
-                    self.get_line(k).set_partner_id(id);
-                    self.get_line_by_id(id).add_queue(data);
+                    self.get_mut_line(k).set_partner_id(id);
+                    self.get_mut_line_by_id(id).add_queue(data);
                 } else {
                     //println!("[{}]create_spider fail",App::now())
                 }
@@ -108,7 +112,8 @@ impl Hub {
     }
 
     fn tunnel(&mut self,pid:u64,data:Vec<u8>) {
-        let line = self.get_line_by_id(pid);
+        assert!(pid > 0);
+        let line = self.get_mut_line_by_id(pid);
         line.add_queue(data);
         line.send();
     }
@@ -119,7 +124,7 @@ impl Hub {
                 let addr = it.next().unwrap();
                 let stream = TcpStream::connect(addr).unwrap();
                 let id = self.new_line(stream,p,LineType::Spider);
-                let spider = self.get_line_by_id(id);
+                let spider = self.get_mut_line_by_id(id);
                 spider.set_partner_id(operator_id);
                 spider.set_host(host,0);
                 return id
