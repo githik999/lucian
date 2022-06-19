@@ -6,7 +6,6 @@ use crate::log::Log;
 impl Line {
     
     pub fn go_die(&mut self) {
-        if self.status() == Dead { return; }
         self.clear_queue();
         self.shutdown_stream();
         self.set_partner_id(0);

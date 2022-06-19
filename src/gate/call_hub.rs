@@ -19,13 +19,17 @@ impl Hub {
     }
 
     pub fn init_callers(&mut self,n:u8,addr:&str,p:&Poll) {
-        assert!(n < 64);
+        assert!(n < u8::MAX/4);
         self.set_healthy_size(n);
         self.set_proxy_server(addr);
         self.add_caller(n,p);
     }
 
     pub fn health_check(&mut self,p:&Poll) {
+        let mut info = [0;4];
+        self.count_caller(&mut info);
+        println!("{:?}",info);
+
         let need = self.healthy_size();
         let have:u8 = self.count_idle_caller();
         if have > need { self.set_spawning(false); }
@@ -55,7 +59,6 @@ impl Hub {
         for (_key, v) in self.m() {
             if v.kind() == LineType::Caller {
                 let i:usize = v.status() as usize;
-                println!("{:?}:{}",v.status(),i);
                 info[i] += 1;
             }
         }

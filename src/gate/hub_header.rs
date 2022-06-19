@@ -33,11 +33,15 @@ impl Hub {
 
     pub fn get_line_by_id(&mut self,id:u64) -> &mut Line {
         assert!(id > 0);
-        self.get_line(&Token(id.try_into().unwrap()))
+        self.get_line(self.token(id))
     }
 
-    pub fn get_line(&mut self,token:&Token) -> &mut Line {
-        self.m.get_mut(token).expect(&token.0.to_string())
+    pub fn get_line(&mut self,token:Token) -> &mut Line {
+        self.m.get_mut(&token).expect(&token.0.to_string())
+    }
+
+    fn token(&self,id:u64) -> Token {
+        Token(id.try_into().unwrap())
     }
 
     
@@ -68,22 +72,24 @@ impl Hub {
         self.spawning = v
     }
 
-    pub fn remove_pair(&mut self,k:&Token,p:&Poll) {
+    pub fn dead_pair(&mut self,k:Token,p:&Poll) {
         let pid = self.get_line(k).partner_id();
-        self.get_line(k).go_die();
-        self.remove_line(k,p);
-        if pid > 0 {
-            self.get_line_by_id(pid).go_die();
-        }
+        self.dead_line_id(pid,p);
+        self.dead_line(k,p);
     }
 
-    pub fn remove_line(&mut self,k:&Token,p:&Poll) {
-        let str = format!("remove|{}",k.0);
+    pub fn dead_line_id(&mut self,id:u64,p:&Poll) {
+        if id > 0 {
+            self.dead_line(self.token(id), p);
+        }
+        
+    }
+
+    pub fn dead_line(&mut self,k:Token,p:&Poll) {
         let kind = self.get_line(k).kind();
         let s = self.get_line(k).stream();
         p.registry().deregister(s).unwrap();
-        self.m.remove(k);
-        Log::add(str,kind,0);
+        self.get_line(k).go_die();
     }
 
     pub fn new_line(&mut self,mut stream:TcpStream,p:&Poll,kind:LineType) -> u64 {
