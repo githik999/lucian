@@ -32,7 +32,6 @@ impl Log {
         for x in all::<LogTag>() {
             Log::new(kind, &x);
         }
-
     }
 
     pub fn new<T:Debug>(kind:LineType,name:&T) {

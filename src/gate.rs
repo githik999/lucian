@@ -28,12 +28,17 @@ impl Gate {
         Gate{ listener,front_type,hub:Hub::new(LogTag::FirstLineID as u64) }
     }
 
+    pub fn front_type(&self) -> &LineType { 
+        &self.front_type
+    }
+
     pub fn process(&mut self, event:&Event,p:&Poll) {
         match event.token() {
             LISTENER => { self.on_listener_event(event,p); }
             _ => { self.hub.process(event,p); }
         }
     }
+    
 
     pub fn check(&mut self,p:&Poll) {
         if self.front_type == LineType::Fox {

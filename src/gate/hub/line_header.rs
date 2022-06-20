@@ -20,6 +20,7 @@ pub enum LineType {
     Operator,
     Spider,
     Http,
+    Error,
 }
 
 #[derive(Debug)]

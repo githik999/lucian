@@ -23,12 +23,16 @@ impl Server {
 
     pub fn start(&mut self) {
         loop {
-            let count = self.events.into_iter().count();
-            Log::add(format!("{}",count), LineType::Caller, &LogTag::Unique);
-            if count == 1 {
-                self.gate.check(&self.p);
-            }
             self.p.poll(&mut self.events, None).unwrap();
+            
+            if self.gate.front_type() == &LineType::Fox {
+                let n = self.events.into_iter().count();
+                Log::add(format!("event num:{}",n), LineType::Caller, &LogTag::Unique);
+                if n == 1 {
+                    self.gate.check(&self.p);
+                }
+            }
+
             for event in self.events.iter() {
                 self.gate.process(event,&self.p);
             }
