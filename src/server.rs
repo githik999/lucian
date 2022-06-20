@@ -1,5 +1,5 @@
 use mio::{Poll, Events};
-use crate::{gate::{Gate, hub::line_header::LineType}, log::{Log, LogTag}};
+use crate::{gate::{Gate, hub::line_header::LineType}, log::Log};
 
 pub struct Server {
     p:Poll,
@@ -19,15 +19,10 @@ impl Server {
 
     pub fn start(&mut self) {
         loop {
+            
             self.p.poll(&mut self.events, None).unwrap();
             
-            if self.gate.front_type() == &LineType::Fox {
-                let n = self.events.into_iter().count();
-                Log::add(format!("event num:{}",n), LineType::Defalut, &LogTag::Default);
-                if n == 1 {
-                    self.gate.check(&self.p);
-                }
-            }
+            self.gate.check();
 
             for event in self.events.iter() {
                 self.gate.process(event,&self.p);

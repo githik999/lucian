@@ -2,7 +2,7 @@ use std::{io::{ErrorKind, Read}, net::Shutdown};
 
 use mio::event::Event;
 
-use super::line_header::{LineStatus::{Connected,Occupied,Dead},Line};
+use super::line_header::{LineStatus::{Connected,Dead},Line};
 use crate::log::{Log, LogTag};
 
 impl Line {
@@ -50,8 +50,8 @@ impl Line {
     }
 
     pub fn send(&mut self) {
-        let s = self.status();
-        if s != Connected && s != Occupied { return; } 
+        let v = self.status();
+        if v != Connected { return ; }
 
         loop {
             if self.queue().len() > 0 {

@@ -10,7 +10,6 @@ use super::line_header::LineStatus::{Born,Dead};
 pub enum LineStatus {
     Born,
     Connected,
-    Occupied,
     Dead,
 }
 
@@ -104,9 +103,6 @@ impl Line {
 
     pub fn set_partner_id(&mut self,id:u64) {
         if self.partner_id == id { return; }
-        if id > 0 {
-            self.set_status(LineStatus::Occupied);
-        }
         self.partner_id = id;
         self.log(format!("p|{}",id));
     }
@@ -118,11 +114,8 @@ impl Line {
     }
 
     pub fn set_host(&mut self,str:String,tag:u64) {
-        if tag > 0 {
-            Log::add(format!("{}|{}|{}",tag,str,self.id), self.kind, &LogTag::Establish);
-        }
+        Log::add(format!("{}|{}|{}",self.id,str,tag), self.kind, &LogTag::Establish);
         self.log(format!("h|{}",str));
-        
         self.host = str;
     }
 
@@ -161,6 +154,7 @@ impl Line {
             Err(err) => {
                 if err.kind() != ErrorKind::WouldBlock {
                     self.log(format!("write error|{:?}",err));
+                    self.go_die();
                 }
             }
         }

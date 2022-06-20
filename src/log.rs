@@ -44,12 +44,13 @@ impl Log {
 
     pub fn add<T:Debug>(str:String,kind:LineType,name:&T) {
         let path = Log::get_path(kind,name);
-        let _msg = path.clone();
         let s = format!("{}|{}\n",Log::now(),str);
-        match File::options().append(true).open(path) {
-            Ok(mut f) => { f.write(s.as_bytes()).unwrap(); }
-            Err(error) => { panic!("Problem opening the file: {:?}", error); }
-        }
+        let mut f = File::options().append(true).open(path).unwrap();
+        f.write(s.as_bytes()).unwrap();
+    }
+
+    pub fn time() -> u64 {
+        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
     }
 
     pub fn now() -> u128 {

@@ -35,6 +35,8 @@ impl Hub {
             }
         }
 
+        Log::add(format!("young:{}|old:{}",young.len(),old.len()), LineType::Caller, &LogTag::Unique);
+
         for id in old {
             self.kill_line_by_id(id);
         }
@@ -45,10 +47,10 @@ impl Hub {
     pub fn health_check(&mut self,p:&Poll) {
         let need = self.healthy_size();
         let have:u8 = self.idle_caller_count();
-        let lock = self.spawning();
-        Log::add(format!("have:{},spawning:{}",have,lock), LineType::Caller, &LogTag::Unique);
+        let spawning = self.spawning();
+        Log::add(format!("have:{}|spawning:{}",have,spawning), LineType::Caller, &LogTag::Unique);
         if have >= need { self.set_spawning(false); }
-        if lock { return; }
+        if spawning { return; }
         if have < need {
             self.spawn(p);
         }

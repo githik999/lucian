@@ -1,12 +1,13 @@
+use crate::log::{Log, LogTag};
+
 use super::line_header::Line;
 use super::line_header::LineStatus::Connected;
 
-//process event
 impl Line {
     pub fn on_error(&mut self) {
-        let error = self.stream().take_error().unwrap();
-        let str = format!("on_error {:?}",error);
-        self.log(str);
+        let err = self.stream().take_error().unwrap().unwrap();
+        Log::add(format!("{}|{}",self.id(),err), self.kind(), &LogTag::Unexpected);
+        self.log(format!("{err}"));
     }
 
 

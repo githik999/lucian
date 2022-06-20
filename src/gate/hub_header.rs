@@ -38,7 +38,7 @@ impl Hub {
     }
 
     pub fn idle_caller(&mut self) -> u64 {
-        self.idle_caller.pop_front().expect("must guarantee have idle caller")
+        self.idle_caller.pop_front().unwrap()
     }
 
     pub fn idle_caller_list(&self) -> &VecDeque<u64> {
@@ -59,10 +59,7 @@ impl Hub {
     }
 
     pub fn get_line(&self,token:&Token) -> &Line {
-        match self.m.get(token) {
-            Some(v) => { v }
-            _ => { panic!("get_line {token:?} error") }
-        }
+        self.m.get(token).unwrap()
     }
 
     pub fn get_mut_line_by_id(&mut self,id:u64) -> &mut Line {
@@ -71,7 +68,7 @@ impl Hub {
     }
 
     pub fn get_mut_line(&mut self,token:&Token) -> &mut Line {
-        self.m.get_mut(token).expect(&token.0.to_string())
+        self.m.get_mut(token).unwrap()
     }
     
     pub fn dead_check(&mut self) {
