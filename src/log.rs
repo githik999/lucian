@@ -4,6 +4,7 @@ use crate::gate::hub::line_header::LineType;
 
 pub enum LogType {
     Default,
+    Unique,
     Event,
     Establish,
     GoodBye,
@@ -24,14 +25,16 @@ impl Log {
     pub fn create_dir(kind:LineType) {
         let path = format!("log/{:?}",kind);
         fs::create_dir(path).unwrap();
-        Log::new(format!("[init]"),kind,LogType::Default as u64);
+        let max = LogType::FirstLineID as u64;
+        for i in 0..max {
+            Log::new(kind,i);
+        }
     }
 
-    pub fn new(str:String,kind:LineType,id:u64) { 
+    pub fn new(kind:LineType,id:u64) {
         let path = Log::get_path(kind,id);
-        let s = format!("{}|{}\n",Log::now(),str);
         let msg = path.clone();
-        fs::write(path, s).expect(msg.as_str());
+        File::create(path).expect(msg.as_str());
     }
 
     pub fn add(str:String,kind:LineType,id:u64) {

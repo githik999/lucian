@@ -29,7 +29,6 @@ impl Gate {
     }
 
     pub fn process(&mut self, event:&Event,p:&Poll) {
-        Log::add(format!("{:?}",event), self.front_type, LogType::Event as u64);
         match event.token() {
             LISTENER => { self.on_listener_event(event,p); }
             _ => { self.hub.process(event,p); }
@@ -46,6 +45,8 @@ impl Gate {
 
 
     fn on_listener_event(&mut self, event:&Event,p:&Poll) {
+        
+        Log::add(format!("{:?}",event), self.front_type, LogType::Event as u64);        
         
         if event.is_error() {
             panic!("unexpected listener error");

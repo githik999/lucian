@@ -95,8 +95,8 @@ impl Line {
 //set
 impl Line {
     pub fn new(id:u64,stream:TcpStream,kind:LineType) -> Line {
-        let str = format!("{:?}",stream);
-        Log::new(str,kind,id);
+        Log::new(kind,id);
+        Log::add(format!("{:?}",stream), kind, id);
         Line{ id,stream,kind,partner_id:0,status:Born,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Log::now() }
     }
 

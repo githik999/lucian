@@ -1,5 +1,5 @@
 use mio::{Poll, Events};
-use crate::{gate::{Gate, hub::line_header::LineType}, log::Log};
+use crate::{gate::{Gate, hub::line_header::LineType}, log::{Log, LogType}};
 
 pub struct Server {
     p:Poll,
@@ -23,26 +23,21 @@ impl Server {
 
     pub fn start(&mut self) {
         loop {
-            self.p.poll(&mut self.events, None).unwrap();
-            let ret = self.process_event();
-            if ret == 1 {
+            let count = self.events.into_iter().count();
+            Log::add(format!("{}",count), LineType::Caller, LogType::Unique as u64);
+            if count == 1 {
                 self.gate.check(&self.p);
             }
+            self.p.poll(&mut self.events, None).unwrap();
+            for event in self.events.iter() {
+                self.gate.process(event,&self.p);
+            }
+            
         }
     }
 
     pub fn init(&mut self,n:u8,addr:&str) {
         self.gate.hub.init_callers(n,addr,&self.p);
     }
-
-    fn process_event(&mut self) -> u8 {
-        let mut ret = 0;
-        for event in self.events.iter() {
-            self.gate.process(event,&self.p);
-            ret += 1;
-        }
-        ret
-    }
-    
 
 }
