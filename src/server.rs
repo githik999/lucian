@@ -19,15 +19,10 @@ impl Server {
 
     pub fn start(&mut self) {
         loop {
-            
             self.p.poll(&mut self.events, None).unwrap();
-            
-            self.gate.check();
-
             for event in self.events.iter() {
                 self.gate.process(event,&self.p);
             }
-            
         }
     }
 

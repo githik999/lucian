@@ -13,6 +13,12 @@ pub enum LineStatus {
     Dead,
 }
 
+pub enum LineAge {
+    Young,
+    Old,
+    Defalut,
+}
+
 #[derive(Debug,Clone,Copy,PartialEq,Sequence)]
 pub enum LineType {
     Fox,

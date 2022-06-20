@@ -6,7 +6,7 @@ use crate::gate::hub::line_header::LineStatus;
 use crate::log::{Log, LogTag};
 
 use super::hub_header::Hub;
-use super::hub::line_header::LineType;
+use super::hub::line_header::{LineType, LineAge};
 
 ///Caller Hub
 
@@ -18,24 +18,34 @@ impl Hub {
         self.add_caller(n,p);
     }
 
+    fn age(&self,id:u64,now:u128) -> LineAge {
+        let v = self.get_line_by_id(id);
+        if v.kind() != LineType::Caller { return LineAge::Defalut; }
+        let s = v.status();
+        if s == LineStatus::Dead { return LineAge::Defalut; }
+        let age = now - v.born_time();
+        if age < 3*60*1000 { 
+            return LineAge::Young;
+        }
+        LineAge::Old
+    }
+
     pub fn old_check(&mut self) {
         let mut old = Vec::new();
         let mut young = VecDeque::new();
+
+        let t = Log::now();
         
         for id in self.idle_caller_list() {
             let id = *id;
-            let v = self.get_line_by_id(id);
-            if v.kind() == LineType::Caller && v.status() <= LineStatus::Connected {
-                let age = Log::now() - v.born_time();
-                if age > 180000 {
-                    old.push(id)
-                } else {
-                    young.push_back(id)
-                }
+            match self.age(id, t) {
+                LineAge::Young => { young.push_back(id); }
+                LineAge::Old => { old.push(id); }
+                _ => {}
             }
         }
 
-        Log::add(format!("young:{}|old:{}",young.len(),old.len()), LineType::Caller, &LogTag::Unique);
+        Log::add(format!("young:{}|old:{}|dead:{}",young.len(),old.len(),self.dead_count()), LineType::Caller, &LogTag::Unique);
 
         for id in old {
             self.kill_line_by_id(id);

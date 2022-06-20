@@ -58,14 +58,14 @@ impl Hub {
         }
 
         match line.kind() {
-            LineType::Fox => {self.process_fox(k,buf);}
+            LineType::Fox => {self.process_fox(k,buf,p);}
             LineType::Http => {self.process_http(k,buf);}
             LineType::Operator => {self.process_operator(k,buf,p);}
             _ => { self.tunnel(pid, buf); }
         }
     }
 
-    fn process_fox(&mut self,k:&Token,buf:Vec<u8>) {
+    fn process_fox(&mut self,k:&Token,buf:Vec<u8>,p:&Poll) {
         let line = self.get_mut_line(k);
         let fox_id = line.id();
         let mut caller_id = line.partner_id();
@@ -73,6 +73,7 @@ impl Hub {
         match line.fox_data(buf) {
             Some(data) => {
                 if caller_id == 0 {
+                    self.check(p);
                     caller_id = self.idle_caller();
                     self.get_mut_line_by_id(caller_id).set_partner_id(fox_id);
                     self.get_mut_line(k).set_partner_id(caller_id);
@@ -134,6 +135,12 @@ impl Hub {
             }
         }
         0
+    }
+
+    fn check(&mut self,p:&Poll) {
+        self.old_check();
+        self.dead_check();
+        self.health_check(p);
     }
 
 

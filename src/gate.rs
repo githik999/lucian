@@ -15,7 +15,6 @@ const LISTENER: Token = Token(0);
 pub struct Gate {
     listener:TcpListener,
     front_type:LineType,
-    last_check:u64,
     pub hub:Hub
 }
 
@@ -26,7 +25,7 @@ impl Gate {
         p.registry().register(&mut listener, LISTENER, Interest::READABLE).unwrap();
         let str = format!("gate({:?}) listening on {} waiting for connections...",front_type,addr);
         Log::add(str, front_type,&LogTag::Default);
-        Gate{ listener,front_type,last_check:0,hub:Hub::new(LogTag::Default as u64) }
+        Gate{ listener,front_type,hub:Hub::new(LogTag::Default as u64) }
     }
 
     pub fn front_type(&self) -> &LineType { 
@@ -40,17 +39,6 @@ impl Gate {
         }
     }
 
-    pub fn check(&mut self) {
-        if self.front_type != LineType::Fox { return; }
-        let t = Log::time();
-        if t - self.last_check > 1 {
-            self.hub.old_check();
-            self.hub.dead_check();
-            self.last_check = t;
-        }
-    }
-
-
     fn on_listener_event(&mut self, event:&Event,p:&Poll) {
         
         Log::add(format!("{:?}",event), LineType::Defalut, &LogTag::Event);        
@@ -58,8 +46,6 @@ impl Gate {
         if event.is_error() {
             panic!("unexpected listener error");
         }
-        
-        self.hub.health_check(p);
 
         loop {
             match self.listener.accept() {
