@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use mio::{Poll, net::TcpStream};
 
 use crate::gate::hub::line_header::LineStatus;
-use crate::log::{Log, LogType};
+use crate::log::{Log, LogTag};
 
 use super::hub_header::Hub;
 use super::hub::line_header::LineType;
@@ -46,7 +46,7 @@ impl Hub {
         let need = self.healthy_size();
         let have:u8 = self.idle_caller_count();
         let lock = self.spawning();
-        Log::add(format!("have:{},spawning:{}",have,lock), LineType::Caller, LogType::Unique as u64);
+        Log::add(format!("have:{},spawning:{}",have,lock), LineType::Caller, &LogTag::Unique);
         if have >= need { self.set_spawning(false); }
         if lock { return; }
         if have < need {

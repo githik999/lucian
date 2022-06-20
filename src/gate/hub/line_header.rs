@@ -2,7 +2,7 @@ use std::io::{Write, ErrorKind};
 
 use mio::net::TcpStream;
 
-use crate::log::{Log, LogType};
+use crate::log::{Log, LogTag};
 use super::line_header::LineStatus::{Born,Dead};
 
 #[derive(Debug,Clone,Copy,PartialEq,PartialOrd)]
@@ -95,8 +95,8 @@ impl Line {
 //set
 impl Line {
     pub fn new(id:u64,stream:TcpStream,kind:LineType) -> Line {
-        Log::new(kind,id);
-        Log::add(format!("{:?}",stream), kind, id);
+        Log::new(kind,&id);
+        Log::add(format!("{:?}",stream), kind, &id);
         Line{ id,stream,kind,partner_id:0,status:Born,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Log::now() }
     }
 
@@ -117,7 +117,7 @@ impl Line {
 
     pub fn set_host(&mut self,str:String,tag:u64) {
         if tag > 0 {
-            Log::add(format!("{}|{}|{}",tag,str,self.id), self.kind, LogType::Establish as u64);
+            Log::add(format!("{}|{}|{}",tag,str,self.id), self.kind, &LogTag::Establish);
         }
         self.log(format!("h|{}",str));
         

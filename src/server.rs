@@ -1,5 +1,5 @@
 use mio::{Poll, Events};
-use crate::{gate::{Gate, hub::line_header::LineType}, log::{Log, LogType}};
+use crate::{gate::{Gate, hub::line_header::LineType}, log::{Log, LogTag}};
 
 pub struct Server {
     p:Poll,
@@ -24,7 +24,7 @@ impl Server {
     pub fn start(&mut self) {
         loop {
             let count = self.events.into_iter().count();
-            Log::add(format!("{}",count), LineType::Caller, LogType::Unique as u64);
+            Log::add(format!("{}",count), LineType::Caller, &LogTag::Unique);
             if count == 1 {
                 self.gate.check(&self.p);
             }

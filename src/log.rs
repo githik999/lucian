@@ -1,8 +1,12 @@
+use core::fmt::Debug;
 use std::{time::SystemTime, fs::{File, self}, io::Write};
+
+use enum_iterator::{all, Sequence};
 
 use crate::gate::hub::line_header::LineType;
 
-pub enum LogType {
+#[derive(Debug,Sequence)]
+pub enum LogTag {
     Default,
     Unique,
     Event,
@@ -25,20 +29,24 @@ impl Log {
     pub fn create_dir(kind:LineType) {
         let path = format!("log/{:?}",kind);
         fs::create_dir(path).unwrap();
-        let max = LogType::FirstLineID as u64;
-        for i in 0..max {
-            Log::new(kind,i);
+        for x in all::<LogTag>() {
+            Log::new(kind, &x);
         }
+
     }
 
-    pub fn new(kind:LineType,id:u64) {
-        let path = Log::get_path(kind,id);
+    pub fn new<T:Debug>(kind:LineType,name:&T) {
+        let path = Log::get_path(kind,name);
+        Log::create_file(path);
+    }
+
+    pub fn create_file(path:String) {
         let msg = path.clone();
         File::create(path).expect(msg.as_str());
     }
 
-    pub fn add(str:String,kind:LineType,id:u64) {
-        let path = Log::get_path(kind,id);
+    pub fn add<T:Debug>(str:String,kind:LineType,name:&T) {
+        let path = Log::get_path(kind,name);
         let msg = path.clone();
         let mut f = File::options().append(true).open(path).expect(msg.as_str());
         let s = format!("{}|{}\n",Log::now(),str);
@@ -49,8 +57,10 @@ impl Log {
         SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis()
     }
 
-    fn get_path(kind:LineType,id:u64) -> String {
-        format!("log/{:?}/{}.log",kind,id)
+    fn get_path<T: Debug>(kind:LineType,name:&T) -> String {
+        format!("log/{:?}/{:?}.log",kind,name)
     }
+
+    
 
 }

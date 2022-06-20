@@ -1,6 +1,6 @@
 use std::net::ToSocketAddrs;
 use mio::{Token, net::TcpStream, Poll, event::Event};
-use crate::log::{Log, LogType};
+use crate::log::{Log, LogTag};
 use self::line_header::LineType;
 use super::hub_header::Hub;
 
@@ -16,7 +16,7 @@ impl Hub {
     
     pub fn process(&mut self,event:&Event,p:&Poll) {
         let k = &event.token();
-        Log::add(format!("{:?}",event), self.get_line(k).kind(), LogType::Event as u64);        
+        Log::add(format!("{:?}",event), self.get_line(k).kind(), &LogTag::Event);        
         if self.get_line(k).is_dead() {
             self.get_line(k).event_after_die(event);
             return;
@@ -130,7 +130,7 @@ impl Hub {
                 return id
             }
             Err(e) => {
-                Log::add(format!("dns lookup fail|{}|{}",host,e), LineType::Spider, 0);
+                Log::add(format!("dns lookup fail|{}|{}",host,e), LineType::Spider, &LogTag::Unexpected);
             }
         }
         0

@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
 
-use crate::log::{Log, LogType};
+use crate::log::{Log, LogTag};
 
 use self::hub_header::Hub;
 use self::hub::line_header::LineType;
@@ -24,8 +24,8 @@ impl Gate {
         let mut listener = TcpListener::bind(addr).unwrap();
         p.registry().register(&mut listener, LISTENER, Interest::READABLE).unwrap();
         let str = format!("gate({:?}) listening on {} waiting for connections...",front_type,addr);
-        Log::add(str, front_type,0);
-        Gate{ listener,front_type,hub:Hub::new(LogType::FirstLineID as u64) }
+        Log::add(str, front_type,&LogTag::Default);
+        Gate{ listener,front_type,hub:Hub::new(LogTag::FirstLineID as u64) }
     }
 
     pub fn process(&mut self, event:&Event,p:&Poll) {
@@ -46,7 +46,7 @@ impl Gate {
 
     fn on_listener_event(&mut self, event:&Event,p:&Poll) {
         
-        Log::add(format!("{:?}",event), self.front_type, LogType::Event as u64);        
+        Log::add(format!("{:?}",event), self.front_type, &LogTag::Event);        
         
         if event.is_error() {
             panic!("unexpected listener error");

@@ -3,7 +3,7 @@ use std::{io::{ErrorKind, Read}, net::Shutdown};
 use mio::event::Event;
 
 use super::line_header::{LineStatus::{Connected,Occupied,Dead},Line};
-use crate::log::{Log, LogType};
+use crate::log::{Log, LogTag};
 
 impl Line {
     
@@ -14,7 +14,7 @@ impl Line {
         self.set_status(Dead);
         let t = Log::now() - self.born_time();
         self.log(format!("die|{}",t));
-        Log::add(format!("{}|{}|{}",self.id(),self.host(),t), self.kind(), LogType::GoodBye as u64);
+        Log::add(format!("{}|{}|{}",self.id(),self.host(),t), self.kind(), &LogTag::GoodBye);
     }
 
     pub fn event_after_die(&self,e:&Event) {
@@ -63,7 +63,7 @@ impl Line {
     }
 
     pub fn log(&self,str:String) {
-        Log::add(str,self.kind(),self.id());
+        Log::add(str,self.kind(),&self.id());
     }
 
 

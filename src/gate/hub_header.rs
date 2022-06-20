@@ -2,7 +2,7 @@ use std::{collections::{HashMap, VecDeque}, net::SocketAddr};
 
 use mio::{Token, Poll, net::TcpStream, Interest};
 
-use crate::{gate::hub::line_header::{Line,LineType}, log::Log};
+use crate::{gate::hub::line_header::{Line,LineType}, log::{Log, LogTag}};
 
 
 pub struct Hub {
@@ -132,7 +132,7 @@ impl Hub {
                 Some(id) => {
                     let kind = self.get_line_by_id(id).kind();
                     self.m.remove(&self.token(id));
-                    Log::add(format!("rm|{}",id), kind, 0);
+                    Log::add(format!("rm|{}",id), kind, &LogTag::Default);
                 }
                 None => {break;}
             }
