@@ -2,7 +2,7 @@ use std::io::{Write, ErrorKind};
 
 use mio::net::TcpStream;
 
-use crate::log::Log;
+use crate::log::{Log, LogType};
 use super::line_header::LineStatus::{Born,Dead};
 
 #[derive(Debug,Clone,Copy,PartialEq,PartialOrd)]
@@ -117,7 +117,7 @@ impl Line {
 
     pub fn set_host(&mut self,str:String,tag:u64) {
         if tag > 0 {
-            Log::add(format!("{}|{}|{}",tag,str,self.id), self.kind, 0);
+            Log::add(format!("{}|{}|{}",tag,str,self.id), self.kind, LogType::Establish as u64);
         }
         self.log(format!("h|{}",str));
         
@@ -125,12 +125,12 @@ impl Line {
     }
 
     pub fn read_closed(&mut self) {
-        //println!("[{}]({})[{}][on_read_closed]read_close:{},write_close:{},",App::now(),self.id,self.partner_id,self.read_close,self.write_close);
+        self.log(format!("rclose|{}",self.write_close));
         self.read_close = true;
     }
 
     pub fn write_closed(&mut self) {
-        //println!("[{}]({})[{}][on_write_closed]read_close:{},write_close:{},",App::now(),self.id,self.partner_id,self.read_close,self.write_close);
+        self.log(format!("wclose|{}",self.read_close));
         self.write_close = true;
     }
 
@@ -146,7 +146,7 @@ impl Line {
     pub fn add_queue(&mut self,v:Vec<u8>) {
         if v.len() > 0 {
             self.queue.extend(v.iter());
-            self.log(format!("q|{}",v.len()));
+            //self.log(format!("q|{}",v.len()));
         }
     }
     
@@ -158,7 +158,7 @@ impl Line {
             }
             Err(err) => {
                 if err.kind() != ErrorKind::WouldBlock {
-                    self.log(format!("write error {:?}",err));
+                    self.log(format!("write error|{:?}",err));
                 }
             }
         }

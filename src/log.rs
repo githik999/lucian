@@ -2,6 +2,15 @@ use std::{time::SystemTime, fs::{File, self}, io::Write};
 
 use crate::gate::hub::line_header::LineType;
 
+pub enum LogType {
+    Default,
+    Event,
+    Establish,
+    GoodBye,
+    Unexpected,
+    FirstLineID,
+}
+
 pub struct Log {}
 
 impl Log {
@@ -15,7 +24,7 @@ impl Log {
     pub fn create_dir(kind:LineType) {
         let path = format!("log/{:?}",kind);
         fs::create_dir(path).unwrap();
-        Log::new(format!("[init]"),kind,0);
+        Log::new(format!("[init]"),kind,LogType::Default as u64);
     }
 
     pub fn new(str:String,kind:LineType,id:u64) { 

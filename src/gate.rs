@@ -1,8 +1,8 @@
-use std::{io::ErrorKind, net::SocketAddr};
+use std::io::ErrorKind;
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
 
-use crate::log::Log;
+use crate::log::{Log, LogType};
 
 use self::hub_header::Hub;
 use self::hub::line_header::LineType;
@@ -19,17 +19,17 @@ pub struct Gate {
 }
 
 impl Gate {
-    pub fn new(port:usize,front_type:LineType,p:&Poll) -> Gate {
-        let addr = Gate::parse_addr(port,front_type);
+    pub fn new(addr:&str,front_type:LineType,p:&Poll) -> Gate {
+        let addr = addr.parse().unwrap();
         let mut listener = TcpListener::bind(addr).unwrap();
         p.registry().register(&mut listener, LISTENER, Interest::READABLE).unwrap();
         let str = format!("gate({:?}) listening on {} waiting for connections...",front_type,addr);
         Log::add(str, front_type,0);
-        Gate{ listener,front_type,hub:Hub::new(0) }
+        Gate{ listener,front_type,hub:Hub::new(LogType::FirstLineID as u64) }
     }
 
     pub fn process(&mut self, event:&Event,p:&Poll) {
-        //Log::add(format!("{:?}",event), self.front_type, 0);
+        Log::add(format!("{:?}",event), self.front_type, LogType::Event as u64);
         match event.token() {
             LISTENER => { self.on_listener_event(event,p); }
             _ => { self.hub.process(event,p); }
@@ -42,7 +42,6 @@ impl Gate {
             self.hub.dead_check();
             self.hub.health_check(p);
         }
-        
     }
 
 
@@ -65,13 +64,6 @@ impl Gate {
         }
        
     }
-
-    fn parse_addr(port:usize,front_type:LineType) -> SocketAddr {
-        let mut ip= "127.0.0.1";
-        if front_type == LineType::Operator {
-            ip = "0.0.0.0";
-        }
-        format!("{}:{}",ip,port).parse().unwrap()
-    }
+    
 
 }

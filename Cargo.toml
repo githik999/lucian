@@ -7,5 +7,5 @@ license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mio = {version = "0.8",features = ["os-poll", "net"]}
+mio = {version = "0.8.4",features = ["os-poll", "net"]}
 sni_shuffle = "0.1"

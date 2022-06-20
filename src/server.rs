@@ -8,7 +8,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new(port:usize,kind:LineType) -> Server {
+    pub fn new(addr:&str,kind:LineType) -> Server {
         let p = Poll::new().unwrap();
         let events = Events::with_capacity(u8::MAX.into());
         Log::create_dir(kind);
@@ -17,7 +17,7 @@ impl Server {
             LineType::Operator => { Log::create_dir(LineType::Spider); }
             _ => {}
         }
-        let gate = Gate::new(port,kind,&p);
+        let gate = Gate::new(addr,kind,&p);
         Server { p, events , gate }
     }
 
