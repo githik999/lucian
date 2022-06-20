@@ -61,10 +61,7 @@ impl Hub {
     pub fn get_line(&self,token:&Token) -> &Line {
         match self.m.get(token) {
             Some(v) => { v }
-            _ => {
-                Log::add(format!(""), LineType::Error, &LogTag::Unexpected);
-                panic!()
-            }
+            _ => { panic!("get_line {token:?} error") }
         }
     }
 

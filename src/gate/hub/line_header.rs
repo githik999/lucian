@@ -1,5 +1,6 @@
 use std::io::{Write, ErrorKind};
 
+use enum_iterator::Sequence;
 use mio::net::TcpStream;
 
 use crate::log::{Log, LogTag};
@@ -13,14 +14,14 @@ pub enum LineStatus {
     Dead,
 }
 
-#[derive(Debug,Clone,Copy,PartialEq)]
+#[derive(Debug,Clone,Copy,PartialEq,Sequence)]
 pub enum LineType {
     Fox,
     Caller,
     Operator,
     Spider,
     Http,
-    Error,
+    Defalut,
 }
 
 #[derive(Debug)]

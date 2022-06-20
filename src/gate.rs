@@ -25,7 +25,7 @@ impl Gate {
         p.registry().register(&mut listener, LISTENER, Interest::READABLE).unwrap();
         let str = format!("gate({:?}) listening on {} waiting for connections...",front_type,addr);
         Log::add(str, front_type,&LogTag::Default);
-        Gate{ listener,front_type,hub:Hub::new(LogTag::FirstLineID as u64) }
+        Gate{ listener,front_type,hub:Hub::new(LogTag::Default as u64) }
     }
 
     pub fn front_type(&self) -> &LineType { 
@@ -51,7 +51,7 @@ impl Gate {
 
     fn on_listener_event(&mut self, event:&Event,p:&Poll) {
         
-        Log::add(format!("{:?}",event), self.front_type, &LogTag::Event);        
+        Log::add(format!("{:?}",event), LineType::Defalut, &LogTag::Event);        
         
         if event.is_error() {
             panic!("unexpected listener error");

@@ -8,5 +8,7 @@ license = "GPL-3.0"
 
 [dependencies]
 mio = {version = "0.8.4",features = ["os-poll", "net"]}
+backtrace = "0.3"
 sni_shuffle = "0.1"
 enum-iterator = "1.1.2"
+

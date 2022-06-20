@@ -12,11 +12,7 @@ impl Server {
         let p = Poll::new().unwrap();
         let events = Events::with_capacity(u8::MAX.into());
         Log::create_dir(kind);
-        match kind {
-            LineType::Fox => { Log::create_dir(LineType::Caller); }
-            LineType::Operator => { Log::create_dir(LineType::Spider); }
-            _ => {}
-        }
+        Log::create_dir(enum_iterator::next(&kind).unwrap());
         let gate = Gate::new(addr,kind,&p);
         Server { p, events , gate }
     }
@@ -27,7 +23,7 @@ impl Server {
             
             if self.gate.front_type() == &LineType::Fox {
                 let n = self.events.into_iter().count();
-                Log::add(format!("event num:{}",n), LineType::Caller, &LogTag::Unique);
+                Log::add(format!("event num:{}",n), LineType::Defalut, &LogTag::Default);
                 if n == 1 {
                     self.gate.check(&self.p);
                 }
