@@ -1,5 +1,17 @@
+use std::{time::SystemTime, fs::File, io::Write};
+
+use backtrace::Backtrace;
 use mio::{Poll, Events};
+
 use crate::{gate::{Gate, hub::line_header::LineType}, log::Log};
+
+
+#[derive(Debug,Clone,Copy,PartialEq,PartialOrd)]
+pub enum Status {
+    Born,
+    Connected,
+    Dead,
+}
 
 pub struct Server {
     p:Poll,
@@ -30,4 +42,29 @@ impl Server {
         self.gate.hub.init_callers(n,addr,&self.p);
     }
 
+}
+
+//
+impl Server {
+    pub fn time() -> u64 {
+        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
+    }
+    
+    pub fn now() -> u128 {
+        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis()
+    }
+
+    pub fn status() -> Status {
+        Status::Dead
+    }
+
+    fn set_panic_hook() {
+        File::create(Log::panic_file()).unwrap();
+        
+        std::panic::set_hook(Box::new(|_| {
+            let bt = Backtrace::new();
+            let mut f = File::options().append(true).open(Log::panic_file()).unwrap();
+            f.write(format!("{:?}",bt).as_bytes()).unwrap();
+        }));
+    }
 }

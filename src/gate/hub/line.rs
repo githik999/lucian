@@ -1,9 +1,9 @@
 use std::{io::{ErrorKind, Read}, net::Shutdown};
 
 use mio::event::Event;
+use crate::{log::{Log, LogTag}, server::{Server, Status::{Dead,Connected}}};
 
-use super::line_header::{LineStatus::{Connected,Dead},Line};
-use crate::log::{Log, LogTag};
+use super::line_header::Line;
 
 impl Line {
     
@@ -12,7 +12,7 @@ impl Line {
         self.shutdown_stream();
         self.set_partner_id(0);
         self.set_status(Dead);
-        let t = Log::now() - self.born_time();
+        let t = Server::now() - self.born_time();
         self.log(format!("die|{}",t));
         Log::add(format!("{}|{}|{}",self.id(),self.host(),t), self.kind(), &LogTag::GoodBye);
     }

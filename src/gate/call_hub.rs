@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 use mio::{Poll, net::TcpStream};
 
-use crate::gate::hub::line_header::LineStatus;
 use crate::log::{Log, LogTag};
+use crate::server::{Server, Status};
 
 use super::hub_header::Hub;
 use super::hub::line_header::{LineType, LineAge};
@@ -22,7 +22,7 @@ impl Hub {
         let v = self.get_line_by_id(id);
         if v.kind() != LineType::Caller { return LineAge::Defalut; }
         let s = v.status();
-        if s == LineStatus::Dead { return LineAge::Defalut; }
+        if s == Status::Dead { return LineAge::Defalut; }
         let age = now - v.born_time();
         if age < 3*60*1000 { 
             return LineAge::Young;
@@ -34,7 +34,7 @@ impl Hub {
         let mut old = Vec::new();
         let mut young = VecDeque::new();
 
-        let t = Log::now();
+        let t = Server::now();
         
         for id in self.idle_caller_list() {
             let id = *id;

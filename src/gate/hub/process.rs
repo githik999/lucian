@@ -1,7 +1,6 @@
-use crate::log::{Log, LogTag};
+use crate::{log::{Log, LogTag}, server::Status::{Connected}};
 
 use super::line_header::Line;
-use super::line_header::LineStatus::Connected;
 
 impl Line {
     pub fn on_error(&mut self) {

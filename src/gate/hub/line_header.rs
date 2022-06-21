@@ -3,15 +3,9 @@ use std::io::{Write, ErrorKind};
 use enum_iterator::Sequence;
 use mio::net::TcpStream;
 
-use crate::log::{Log, LogTag};
-use super::line_header::LineStatus::{Born,Dead};
+use crate::{log::{Log, LogTag}, server::{Server, Status::{self,Born,Dead,Connected}}};
 
-#[derive(Debug,Clone,Copy,PartialEq,PartialOrd)]
-pub enum LineStatus {
-    Born,
-    Connected,
-    Dead,
-}
+
 
 pub enum LineAge {
     Young,
@@ -34,7 +28,7 @@ pub struct  Line {
     id:u64,
     partner_id:u64,
     stream:TcpStream,
-    status:LineStatus,
+    status:Status,
     kind:LineType,
     queue:Vec<u8>,
     stage:u8,
@@ -60,7 +54,7 @@ impl Line {
         &mut self.stream
     }
 
-    pub fn status(&self) -> LineStatus {
+    pub fn status(&self) -> Status {
         self.status
     }
 
@@ -91,7 +85,7 @@ impl Line {
 
     pub fn available(&self) -> bool {
         if self.kind != LineType::Caller { return false; }
-        if self.status != LineStatus::Connected { return false; }
+        if self.status != Connected { return false; }
         true
     }
     
@@ -104,7 +98,7 @@ impl Line {
     pub fn new(id:u64,stream:TcpStream,kind:LineType) -> Line {
         Log::new(kind,&id);
         Log::add(format!("{:?}",stream), kind, &id);
-        Line{ id,stream,kind,partner_id:0,status:Born,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Log::now() }
+        Line{ id,stream,kind,partner_id:0,status:Born,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Server::now() }
     }
 
     pub fn set_partner_id(&mut self,id:u64) {
@@ -113,7 +107,7 @@ impl Line {
         self.log(format!("p|{}",id));
     }
 
-    pub fn set_status(&mut self,v:LineStatus) {
+    pub fn set_status(&mut self,v:Status) {
         if v <= self.status { return; }
         self.log(format!("s|{:?}",v));
         self.status = v;

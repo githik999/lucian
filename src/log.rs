@@ -1,10 +1,9 @@
 use core::fmt::Debug;
-use backtrace::Backtrace;
-use std::{time::SystemTime, fs::{File, self}, io::Write};
+use std::{fs::{File, self}, io::Write};
 
 use enum_iterator::{all, Sequence};
 
-use crate::gate::hub::line_header::LineType;
+use crate::{gate::hub::line_header::LineType, server::Server};
 
 #[derive(Debug,Sequence)]
 pub enum LogTag {
@@ -19,11 +18,12 @@ pub enum LogTag {
 pub struct Log {}
 
 impl Log {
-    pub fn init() {
-        Log::create_log_dir();
-        Log::set_panic_hook();
+    pub fn create_log_dir() {
+        let path = "log";
+        fs::remove_dir_all(path).unwrap();
+        fs::create_dir(path).unwrap(); 
     }
-
+    
     pub fn create_dir(kind:LineType) {
         let path = format!("log/{:?}",kind);
         fs::create_dir(path).unwrap();
@@ -44,43 +44,24 @@ impl Log {
 
     pub fn add<T:Debug>(str:String,kind:LineType,name:&T) {
         let path = Log::get_path(kind,name);
-        let s = format!("{}|{}\n",Log::now(),str);
+        let s = format!("{}|{}\n",Server::now(),str);
         let mut f = File::options().append(true).open(path).unwrap();
         f.write(s.as_bytes()).unwrap();
     }
 
-    pub fn time() -> u64 {
-        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
-    }
-
-    pub fn now() -> u128 {
-        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis()
-    }
-
-    fn set_panic_hook() {
-        File::create(Log::panic_file()).unwrap();
-        
-        std::panic::set_hook(Box::new(|_| {
-            let bt = Backtrace::new();
-            let mut f = File::options().append(true).open(Log::panic_file()).unwrap();
-            f.write(format!("{:?}",bt).as_bytes()).unwrap();
-        }));
-    }
+    
+   
 
     fn get_path<T: Debug>(kind:LineType,name:&T) -> String {
         format!("log/{:?}/{:?}.log",kind,name)
     }
     
 
-    fn panic_file() -> String {
+    pub fn panic_file() -> String {
         String::from("log/panic.log")
     }
 
-    fn create_log_dir() {
-        let path = "log";
-        fs::remove_dir_all(path).unwrap();
-        fs::create_dir(path).unwrap(); 
-    }
+    
 
     
 
