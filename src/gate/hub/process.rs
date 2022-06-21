@@ -1,4 +1,4 @@
-use crate::{log::{Log, LogTag}, server::Status::{Connected}};
+use crate::{log::{Log, LogTag}, server::Status::{Working}};
 
 use super::line_header::Line;
 
@@ -11,7 +11,7 @@ impl Line {
 
 
     pub fn on_writable(&mut self) {
-        self.set_status(Connected);
+        self.set_status(Working);
         self.send();
     }
 

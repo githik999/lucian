@@ -1,6 +1,6 @@
 use std::net::ToSocketAddrs;
 use mio::{Token, net::TcpStream, Poll, event::Event};
-use crate::log::{Log, LogTag};
+use crate::{log::{Log, LogTag}, server::Server};
 use self::line_header::LineType;
 use super::hub_header::Hub;
 
@@ -142,6 +142,12 @@ impl Hub {
         self.dead_check();
         self.health_check(p);
     }
+
+    pub fn update_working_count(&self) {
+        let n = self.working_caller_count();
+        Server::set_working_caller_count(n);
+    }
+    
 
 
 }

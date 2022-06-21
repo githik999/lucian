@@ -19,7 +19,7 @@ pub struct Gate {
 }
 
 impl Gate {
-    pub fn new(addr:&str,front_type:LineType,p:&Poll) -> Gate {
+    pub fn new(addr:String,front_type:LineType,p:&Poll) -> Gate {
         let addr = addr.parse().unwrap();
         let mut listener = TcpListener::bind(addr).unwrap();
         p.registry().register(&mut listener, LISTENER, Interest::READABLE).unwrap();

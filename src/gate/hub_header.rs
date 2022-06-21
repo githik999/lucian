@@ -7,7 +7,6 @@ use crate::{gate::hub::line_header::{Line,LineType}, log::{Log, LogTag}};
 
 pub struct Hub {
     id:u64,
-    spawning:bool,
     healthy_size:u8,
     proxy_server:Option<SocketAddr>,
     m:HashMap<Token,Line>,
@@ -27,10 +26,6 @@ impl Hub {
 
     pub fn healthy_size(&self) -> u8 {
         self.healthy_size
-    }
-
-    pub fn spawning(&self) -> bool {
-        self.spawning
     }
 
     pub fn idle_caller_count(&self) -> u8 {
@@ -89,7 +84,7 @@ impl Hub {
 impl Hub {
     
     pub fn new(id:u64) -> Hub {
-        Hub { id,spawning:false,healthy_size:0,proxy_server:None,m:HashMap::new(),idle_caller:VecDeque::new(),dead:Vec::new() }
+        Hub { id,healthy_size:0,proxy_server:None,m:HashMap::new(),idle_caller:VecDeque::new(),dead:Vec::new() }
     }
 
     pub fn next_id(&mut self) -> u64 {
@@ -101,12 +96,8 @@ impl Hub {
         self.healthy_size = n;
     }
 
-    pub fn set_proxy_server(&mut self,addr:&str) {
+    pub fn set_proxy_server(&mut self,addr:String) {
         self.proxy_server = Some(addr.parse().unwrap());
-    }
-
-    pub fn set_spawning(&mut self,v:bool) {
-        self.spawning = v
     }
 
     pub fn dead_pair(&mut self,k:&Token) {

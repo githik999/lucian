@@ -3,7 +3,7 @@ use std::io::{Write, ErrorKind};
 use enum_iterator::Sequence;
 use mio::net::TcpStream;
 
-use crate::{log::{Log, LogTag}, server::{Server, Status::{self,Born,Dead,Connected}}};
+use crate::{log::{Log, LogTag}, server::{Server, Status::{self,Baby,Working,Dead}}};
 
 
 
@@ -85,7 +85,7 @@ impl Line {
 
     pub fn available(&self) -> bool {
         if self.kind != LineType::Caller { return false; }
-        if self.status != Connected { return false; }
+        if self.status != Working { return false; }
         true
     }
     
@@ -98,7 +98,7 @@ impl Line {
     pub fn new(id:u64,stream:TcpStream,kind:LineType) -> Line {
         Log::new(kind,&id);
         Log::add(format!("{:?}",stream), kind, &id);
-        Line{ id,stream,kind,partner_id:0,status:Born,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Server::now() }
+        Line{ id,stream,kind,partner_id:0,status:Baby,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Server::now() }
     }
 
     pub fn set_partner_id(&mut self,id:u64) {

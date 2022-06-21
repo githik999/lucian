@@ -1,7 +1,7 @@
 use std::{io::{ErrorKind, Read}, net::Shutdown};
 
 use mio::event::Event;
-use crate::{log::{Log, LogTag}, server::{Server, Status::{Dead,Connected}}};
+use crate::{log::{Log, LogTag}, server::{Server, Status::{Dead,Working}}};
 
 use super::line_header::Line;
 
@@ -51,7 +51,7 @@ impl Line {
 
     pub fn send(&mut self) {
         let v = self.status();
-        if v != Connected { return ; }
+        if v != Working { return ; }
 
         loop {
             if self.queue().len() > 0 {
@@ -68,7 +68,7 @@ impl Line {
 
 
     fn shutdown_stream(&mut self) {
-        if self.status() != Connected { return; }
+        if self.status() != Working { return; }
         match self.stream().shutdown(Shutdown::Both) {
             Ok(_) => {}
             Err(err) => { println!("shutdown fail {}",err); }
