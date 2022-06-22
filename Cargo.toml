@@ -7,9 +7,10 @@ license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+omg-cool = "0.1"
 mio = {version = "0.8.4",features = ["os-poll", "net"]}
-backtrace = "0.3"
-sni_shuffle = "0.1"
 enum-iterator = "1.1.2"
-configparser = "3.0.0"
+sni_shuffle = "0.1"
 
+[patch.crates-io]
+omg-cool = { path = '../omg-cool' }

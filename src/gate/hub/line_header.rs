@@ -1,27 +1,8 @@
 use std::io::{Write, ErrorKind};
 
-use enum_iterator::Sequence;
 use mio::net::TcpStream;
+use omg_cool::{header::{Status::{self,Baby,Working,Dead},LineType, LogTag}, log::Log, time::Time};
 
-use crate::{log::{Log, LogTag}, server::{Server, Status::{self,Baby,Working,Dead}}};
-
-
-
-pub enum LineAge {
-    Young,
-    Old,
-    Defalut,
-}
-
-#[derive(Debug,Clone,Copy,PartialEq,Sequence)]
-pub enum LineType {
-    Fox,
-    Caller,
-    Operator,
-    Spider,
-    Http,
-    Defalut,
-}
 
 #[derive(Debug)]
 pub struct  Line {
@@ -38,10 +19,9 @@ pub struct  Line {
     born:u128,
 }
 
-
-
 //get
 impl Line {
+    
     pub fn id(&self) -> u64 {
         self.id
     }
@@ -88,8 +68,6 @@ impl Line {
         if self.status != Working { return false; }
         true
     }
-    
-
 }
 
 
@@ -98,7 +76,7 @@ impl Line {
     pub fn new(id:u64,stream:TcpStream,kind:LineType) -> Line {
         Log::new(kind,&id);
         Log::add(format!("{:?}",stream), kind, &id);
-        Line{ id,stream,kind,partner_id:0,status:Baby,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Server::now() }
+        Line{ id,stream,kind,partner_id:0,status:Baby,queue:Vec::new(),stage:0,host:String::from(""),read_close:false,write_close:false,born:Time::now() }
     }
 
     pub fn set_partner_id(&mut self,id:u64) {
@@ -132,7 +110,6 @@ impl Line {
     pub fn next_stage(&mut self) {
         self.stage = self.stage + 1;
     }
-
 }
 
 

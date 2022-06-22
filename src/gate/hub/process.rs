@@ -1,4 +1,4 @@
-use crate::{log::{Log, LogTag}, server::Status::{Working}};
+use omg_cool::{log::Log, header::{Status::Working,LogTag}};
 
 use super::line_header::Line;
 

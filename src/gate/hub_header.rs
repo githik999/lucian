@@ -1,8 +1,9 @@
 use std::{collections::{HashMap, VecDeque}, net::SocketAddr};
 
 use mio::{Token, Poll, net::TcpStream, Interest};
+use omg_cool::{header::{LineType, LogTag}, log::Log};
 
-use crate::{gate::hub::line_header::{Line,LineType}, log::{Log, LogTag}};
+use super::hub::line_header::Line;
 
 
 pub struct Hub {

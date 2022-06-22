@@ -1,12 +1,10 @@
 use std::collections::VecDeque;
 
 use mio::{Poll, net::TcpStream};
+use omg_cool::{time::Time, header::{Status, LineAge, LineType, LogTag}, log::Log};
 
-use crate::log::{Log, LogTag};
-use crate::server::{Server, Status};
 
 use super::hub_header::Hub;
-use super::hub::line_header::{LineType, LineAge};
 
 ///Caller Hub
 
@@ -38,7 +36,7 @@ impl Hub {
         let mut old = Vec::new();
         let mut young = VecDeque::new();
 
-        let t = Server::now();
+        let t = Time::now();
         
         for id in self.idle_caller_list() {
             let id = *id;

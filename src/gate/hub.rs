@@ -1,7 +1,6 @@
-use std::net::ToSocketAddrs;
-use mio::{Token, net::TcpStream, Poll, event::Event};
-use crate::{log::{Log, LogTag}, server::Server};
-use self::line_header::LineType;
+
+use mio::{Token,Poll, event::Event};
+use omg_cool::{log::Log, header::{LogTag, LineType}, tcp::Tcp, config::Config};
 use super::hub_header::Hub;
 
 pub mod line_header;
@@ -120,21 +119,16 @@ impl Hub {
     }
 
     fn create_spider(&mut self,host:String,operator_id:u64,p:&Poll) -> u64 {
-        match host.to_socket_addrs() {
-            Ok(mut it) => {
-                let addr = it.next().unwrap();
-                let stream = TcpStream::connect(addr).unwrap();
-                let id = self.new_line(stream,p,LineType::Spider);
+        match Tcp::connect(&host) {
+            Some(s) => {
+                let id = self.new_line(s,p,LineType::Spider);
                 let spider = self.get_mut_line_by_id(id);
                 spider.set_partner_id(operator_id);
                 spider.set_host(host,0);
                 return id
             }
-            Err(e) => {
-                Log::add(format!("dns lookup fail|{}|{}",host,e), LineType::Spider, &LogTag::Unexpected);
-            }
+            _ => {0}
         }
-        0
     }
 
     fn check(&mut self,p:&Poll) {
@@ -145,7 +139,7 @@ impl Hub {
 
     pub fn update_working_count(&self) {
         let n = self.working_caller_count();
-        Server::set_working_caller_count(n);
+        Config::set_working_caller_count(n);
     }
     
 

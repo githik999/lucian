@@ -1,8 +1,4 @@
-use configparser::ini::Ini;
 
-pub struct Config {
-
-}
 
 impl Config {
     pub fn get_all() -> (String,String,u8,String,bool) {
@@ -16,21 +12,9 @@ impl Config {
         (app,http,worker,proxy_server_addr,write_log)
     }
 
-    pub fn get_listen_addr() -> (String,String) {
-        let mut config = Ini::new();
-        config.load(Config::path()).unwrap();
-        let app = config.get("listen","app").unwrap();
-        let http = config.get("listen","http").unwrap();
-        (app,http)
-    }
+   
 
-    pub fn get_proxy_server_addr() -> String {
-        let mut config = Ini::new();
-        config.load(Config::path()).unwrap();
-        config.get("server","addr").unwrap()
-    }
+   
     
-    fn path() -> String {
-        "theshy.ini".to_string()
-    }
+    
 }

@@ -1,11 +1,10 @@
 use std::io::ErrorKind;
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
-
-use crate::log::{Log, LogTag};
+use omg_cool::{header::{LineType, LogTag}, log::Log};
 
 use self::hub_header::Hub;
-use self::hub::line_header::LineType;
+
 
 mod call_hub;
 pub mod hub;
