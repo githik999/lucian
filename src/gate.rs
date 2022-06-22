@@ -2,9 +2,7 @@ use std::io::ErrorKind;
 
 use mio::{net::TcpListener, Poll, Interest, Token, event::Event};
 use omg_cool::{header::{LineType, LogTag}, log::Log};
-
 use self::hub_header::Hub;
-
 
 mod call_hub;
 pub mod hub;
