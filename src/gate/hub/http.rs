@@ -12,7 +12,7 @@ impl Line {
         }
         
         let (content,code,mime) = self.get_content(req[1]);
-        let head = format!("HTTP/1.1 {} OK\r\nContent-Type: {}; charset=utf-8\r\n\r\n",code,mime);
+        let head = format!("HTTP/1.1 {} OK\r\nContent-Type: {}; charset=utf-8\r\nAccess-Control-Allow-Origin: *\r\n\r\n",code,mime);
         self.add_queue(head.as_bytes().to_vec());
         self.add_queue(content);
         self.send();
@@ -21,8 +21,8 @@ impl Line {
     }
 
     fn get_content(&self,mut path:&str) -> (Vec<u8>,u16,&str) {
-        println!("{}",path);
         let empty = Vec::new();
+        let mut dir = "dist";
         let mut mime = "text/html";
         if path.len() > 256 { return (empty,403,mime) }
         if path == "/" { path = "index.html"; }
@@ -34,11 +34,14 @@ impl Line {
             mime = "image/png";
         } else if path.contains(".pac") {
             mime = "application/x-ns-proxy-autoconfig";
+        } else if path.contains(".log") {
+            dir = "log";
+            mime = "text/plain";
         }
 
         
         
-        match fs::read(format!("dist/{}",path)) {
+        match fs::read(format!("{}/{}",dir,path)) {
             Ok(data) => { (data,200,mime) }
             _ => { (empty,404,mime) }
         }
